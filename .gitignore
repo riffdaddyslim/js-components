@@ -1,0 +1,6 @@
+# modules
+/node_modules
+
+# generated content
+/docs
+/dist

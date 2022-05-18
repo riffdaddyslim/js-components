@@ -1,0 +1,80 @@
+.reservation-date-display-container {
+  width: 100%;
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.calendar-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-header-left, .calendar-header-right {
+  display: flex;
+  gap: 10px;
+}
+
+.calendar-header-right {
+  justify-content: flex-end;
+}
+
+.calendar-title {
+  outline: none;
+  font-size: 20pt;
+  font-weight: bold;
+  width: auto;
+}
+
+.calendar-label {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #969696;
+  border-bottom: thin #969696 solid;
+}
+
+.calendar-label > div {
+  background-color: #eee;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.calendar-body {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #969696;
+}
+
+.calendar-cell {
+  padding: 0.5rem;
+  background-color: white;
+  transition: ease 150ms;
+  border: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.active-day {
+  background-color: #eee;
+}
+
+.reserved {
+  background-color: #ffdfdf;
+}
+
+.selected {
+  background-color: #19a974;
+}
+
+.calendar-cell.hover:hover:enabled {
+  background-color: #eeeeee;
+  cursor: pointer;
+}

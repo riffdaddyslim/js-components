@@ -1,0 +1,55 @@
+@use "./variables" as v;
+
+.component {
+    &-light-theme {
+        --primary: #{v.$Near-White};
+        --secondary: #{v.$Dark-Gray};
+        --light: #{v.$Light-Gray};
+        --dark: #{v.$Near-Black};
+
+        --border: 1px var(--dark) solid; 
+        --light-border: 1px #{v.$Moon-Gray} solid; 
+        --outline: 1px var(--dark) solid; 
+        --shadow: 2px 3px 10px rgba(0,0,0,0.2);
+        
+        --primary-bg: #{v.$White};
+        --secondary-bg: #{v.$Light-Gray};
+        --strong-bg: #{v.$Moon-Gray};
+        --hover: #{v.$Light-Gray};
+        --hover-bg: #{v.$Near-White};
+
+        --green: #{v.$Green};
+        --red: #{v.$Red};
+
+        --highlight-bg: #{v.$Light-Blue};
+        --highlight-color: #{v.$Dark-Blue};
+
+        --disabled-color: #{v.$Silver};
+    }
+    
+    &-dark-theme {
+        --primary: #{v.$Near-Black};
+        --secondary: #{v.$Near-White};
+        --light: #{v.$Light-Gray};
+        --dark: #{v.$Near-Black};
+
+        --border: 1px var(--light) solid; 
+        --light-border: 1px var(--secondary) solid; 
+        --outline: 1px var(--light) solid; 
+        --shadow: 2px 3px 10px rgba(247, 247, 247, 0.2);
+        
+        --primary-bg: #{v.$Dark-Gray};
+        --secondary-bg: #{v.$Mid-Gray};
+        --strong-bg: #{v.$Near-Black};
+        --hover: #{v.$Dark-Gray};
+        --hover-bg: #{v.$Dark-Gray};
+
+        --green: #{v.$Green};
+        --red: #{v.$Red};
+
+        --highlight-bg: #{v.$Light-Blue};
+        --highlight-color: #{v.$Dark-Blue};
+
+        --disabled-color: #{v.$Silver};
+    }
+}

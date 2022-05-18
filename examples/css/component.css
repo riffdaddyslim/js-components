@@ -1,0 +1,236 @@
+@charset "UTF-8";
+.component-light-theme {
+  --primary: #f4f4f4;
+  --secondary: #333;
+  --light: #eee;
+  --dark: #111;
+  --border: 1px var(--dark) solid;
+  --light-border: 1px #ccc solid;
+  --outline: 1px var(--dark) solid;
+  --shadow: 2px 3px 10px rgba(0,0,0,0.2);
+  --primary-bg: #fff;
+  --secondary-bg: #eee;
+  --strong-bg: #ccc;
+  --hover: #eee;
+  --hover-bg: #f4f4f4;
+  --green: #19a974;
+  --red: #ff4136;
+  --highlight-bg: #96ccff;
+  --highlight-color: #00449e;
+  --disabled-color: #999;
+}
+.component-dark-theme {
+  --primary: #111;
+  --secondary: #f4f4f4;
+  --light: #eee;
+  --dark: #111;
+  --border: 1px var(--light) solid;
+  --light-border: 1px var(--secondary) solid;
+  --outline: 1px var(--light) solid;
+  --shadow: 2px 3px 10px rgba(247, 247, 247, 0.2);
+  --primary-bg: #333;
+  --secondary-bg: #555;
+  --strong-bg: #111;
+  --hover: #333;
+  --hover-bg: #333;
+  --green: #19a974;
+  --red: #ff4136;
+  --highlight-bg: #96ccff;
+  --highlight-color: #00449e;
+  --disabled-color: #999;
+}
+
+.component-grid {
+  display: grid;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.component-flex {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.component-row {
+  padding: 0.75rem 0.5rem;
+}
+
+.x-scroll {
+  overflow-x: overlay;
+}
+
+.component-control-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.component-control-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.component-input {
+  padding: 0.5rem;
+  border: var(--border);
+  background-color: var(--primary-bg);
+}
+.component-context-menu {
+  border: var(--light-border);
+  box-shadow: var(--shadow);
+  position: fixed;
+  z-index: 999;
+  opacity: 0;
+  transform-origin: top left;
+  transform: scale(0);
+  pointer-events: none;
+  transition: transform 150ms, opacity 250ms;
+  max-width: 250px;
+  color: var(--secondary);
+  background-color: var(--primary-bg);
+}
+.component-context-menu.active {
+  transform: scale(1);
+  pointer-events: all;
+  opacity: 1;
+}
+.component-context-menu.rounded {
+  border-radius: 5px;
+  overflow: hidden;
+}
+.component-context-menu-item {
+  grid-template-columns: 15px 1fr 100px;
+  padding: 0.5rem 0.75rem;
+  border-bottom: var(--light-border);
+  color: var(--secondary);
+  background-color: transparent;
+  cursor: pointer;
+}
+.component-context-menu-item:last-child {
+  border-bottom: none;
+}
+.component-context-menu-item::before {
+  content: attr(data-icon);
+  text-align: center;
+  height: 100%;
+}
+.component-context-menu-item::after {
+  content: attr(data-keybind);
+  text-align: right;
+  font-size: 8pt;
+}
+.component-context-menu-item:hover {
+  background-color: var(--hover-bg);
+}
+.component-context-menu-item.disabled {
+  pointer-events: none;
+  color: var(--disabled-color);
+}
+.component-btn {
+  border: var(--border);
+  padding: 0.5rem;
+  cursor: pointer;
+  background-color: var(--primary);
+  color: var(--secondary);
+}
+.component-btn:focus {
+  outline: var(--outline);
+}
+.component-btn:hover {
+  background-color: var(--hover);
+}
+.component-label {
+  font-weight: bold;
+}
+.component-bordered {
+  border: var(--light-border);
+  box-shadow: var(--shadow);
+}
+.component-rounded, .component-rounded input, .component-rounded .component-btn, .component-rounded .dropdown-item, .component-rounded .dropdown-btn, .component-rounded .dropdown-select-btn {
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.dropdown {
+  position: relative;
+}
+.dropdown-btn, .dropdown-select-btn {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  border: var(--border);
+  padding: 0.5rem;
+  cursor: pointer;
+  justify-content: space-between;
+}
+.dropdown-btn:focus, .dropdown-select-btn:focus {
+  outline: var(--outline);
+}
+.dropdown-btn::after, .dropdown-select-btn::after {
+  content: "➜";
+  display: inline-block;
+  transform: rotate(90deg);
+  transition: transform 150ms;
+}
+.dropdown-btn.active, .active.dropdown-select-btn {
+  outline: var(--outline);
+}
+.dropdown-btn.active::after, .active.dropdown-select-btn::after {
+  transform: rotate(-90deg);
+}
+.dropdown-select-btn {
+  color: var(--secondary);
+  background-color: var(--primary-bg);
+  width: 100%;
+}
+.dropdown-item {
+  z-index: 999;
+  position: absolute;
+  top: calc(100% + 5px);
+  min-width: 100%;
+  left: 0;
+  opacity: 0;
+  transform: scaleY(0);
+  transition: transform 150ms, opacity 250ms;
+  transform-origin: top center;
+  pointer-events: none;
+  background-color: var(--primary-bg);
+  box-shadow: var(--shadow);
+  overflow-y: overlay;
+  border: var(--light-border);
+}
+.dropdown-item.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: scaleY(1);
+}
+.dropdown-multi-item {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.dropdown-select-item {
+  display: flex;
+  flex-direction: column;
+}
+.dropdown-select-item > * {
+  width: 100%;
+  padding: 0.5rem;
+  outline: none;
+  border: none;
+  border-bottom: var(--border);
+  background-color: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--secondary);
+}
+.dropdown-select-item > *:last-child {
+  border-bottom: none;
+}
+.dropdown-select-item > *.select-selected, .dropdown-select-item > *:hover {
+  background-color: var(--hover-bg);
+}

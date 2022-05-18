@@ -1,0 +1,7 @@
+@use "mixins";
+
+.component-grid { display: grid; gap: 0.5rem; align-items: center; }
+.component-flex { @include mixins.flex(); }
+.component-row { padding: 0.75rem 0.5rem; }
+
+.x-scroll { overflow-x: overlay; }

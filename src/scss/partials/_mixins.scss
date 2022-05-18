@@ -1,0 +1,50 @@
+@mixin rounded { border-radius: 5px; overflow: hidden; }
+@mixin bold-border { border: var(--border); }
+@mixin light-border { border: var(--light-border); }
+@mixin shadow { box-shadow: var(--shadow); }
+@mixin outline { outline: var(--outline); }
+
+@mixin flex { display: flex; gap: 0.5rem; align-items: center; }
+
+@mixin btn {
+    @include bold-border();
+    padding:  0.5rem;
+    cursor: pointer;
+
+    &:focus { @include outline(); }
+}
+
+@mixin popup {
+    position: fixed;
+    z-index: 999;
+    opacity: 0;
+    transform-origin: top left;
+    transform: scale(0);
+    pointer-events: none;
+    transition: transform 150ms, opacity 250ms;
+    
+    &.active {
+        transform: scale(1);
+        pointer-events: all;
+        opacity: 1;
+    }
+}
+
+@mixin dropdown {
+    z-index: 999;
+    position: absolute;
+    top: calc(100% + 5px);
+    min-width: 100%;
+    left: 0;
+    opacity: 0;
+    transform: scaleY(0);
+    transition: transform 150ms, opacity 250ms;
+    transform-origin: top center;
+    pointer-events: none;
+
+    &.active {
+        opacity: 1;
+        pointer-events: all;
+        transform: scaleY(1);
+    }
+}
