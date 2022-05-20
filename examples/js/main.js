@@ -1,23 +1,23 @@
 import {buildCalendar} from "./exampleCalendar.js";
 import buildGrid from "./exampleGrid.js";
 
-// const GRID = buildGrid(document.getElementById("grid"))
-// GRID.render()
+const GRID = buildGrid(document.getElementById("grid"))
+GRID.render()
 
-// document.getElementById("calendar").addEventListener("renderComplete", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("renderComplete", e => {
+    console.log(e)
+})
 
 const CALENDAR = buildCalendar(document.getElementById("calendar"))
 CALENDAR.render()
 
-// document.getElementById("calendar").addEventListener("change", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("change", e => {
+    console.log(e)
+})
 
-// document.getElementById("calendar").addEventListener("confirm", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("confirm", e => {
+    console.log(e)
+})
 
 document.getElementById("calendar").addEventListener("eventClick", e => {
     console.log(e)
