@@ -7,6 +7,23 @@
 .grid-header {
   font-weight: bold;
 }
+.grid-header .grid-cell[data-key] {
+  cursor: pointer;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+}
+.grid-header .grid-cell[data-key]::after {
+  content: "⮁";
+  font-size: 1.25rem;
+}
+.grid-header .grid-cell[data-key][data-key][data-direction=desc]::after {
+  content: "🠗";
+}
+.grid-header .grid-cell[data-key][data-key][data-direction=asc]::after {
+  content: "🠕";
+}
 .grid-cell {
   padding: 1rem;
 }
@@ -31,6 +48,10 @@
 .grid-body details[open] .expandIcon::before {
   content: "🞫";
   color: var(--red);
+}
+.grid-no-data {
+  width: 100%;
+  text-align: center;
 }
 .grid-expand {
   padding: 0 1rem 1rem 1rem;
