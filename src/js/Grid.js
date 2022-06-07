@@ -29,18 +29,25 @@ class Grid extends Component {
 
     #columns = null
     #data = null
+
+    // Optional Params
+    #numbered
     
     /**
      * JS Grid Component
      * @param {HTMLElement} container Element to build the grid
      * @param {ColumnItem[]} columns 
      * @param {Object} data Data to display in the grid
+     * @param {Boolean} numbered Determines if the rows will be numbered
      */
-    constructor(container, columns, data) {
+    constructor(container, columns, data, {
+        numbered = true
+    } = {}) {
         super({ container })
 
         this.#columns = columns
         this.#data = data
+        this.#numbered = numbered
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
@@ -60,10 +67,23 @@ class Grid extends Component {
         return column.display
     }
 
+    #getNumberCell(content) {
+        return Component.createElement({
+            classAttr: "grid-cell",
+            content
+        })
+    }
+
     #renderHeader() {
         this.#header.innerHTML = ""
-
         let layout = `--layout:`
+
+        // Adds header for row numbers
+        if (this.#numbered) {
+            this.#header.appendChild(this.#getNumberCell("#"))
+            layout += " 50px"
+        }
+
         for (let column of this.#columns) {
             layout += ` ${column.width ?? "1fr"}`
             
@@ -80,10 +100,13 @@ class Grid extends Component {
     }
 
     #renderBody() {
-        for (let row of this.#data) {
+        this.#data.forEach((row, index) => {
             let rowElem = Component.createElement({
                 classAttr: "grid-row"
             })
+
+            console.log(this.#numbered)
+            if (this.#numbered) rowElem.appendChild(this.#getNumberCell(index + 1))
             
             for (let column of this.#columns) {
                 rowElem.appendChild(Component.createElement({
@@ -93,7 +116,7 @@ class Grid extends Component {
             }
 
             this.#body.appendChild(rowElem)
-        }
+        })
     }
 
     #renderFooter() {
