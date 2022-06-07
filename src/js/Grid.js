@@ -30,9 +30,6 @@ class Grid extends Component {
     #columns = null
     #data = null
 
-    // Optional Params
-    #numbered
-    
     /**
      * JS Grid Component
      * @param {HTMLElement} container Element to build the grid
@@ -41,13 +38,21 @@ class Grid extends Component {
      * @param {Boolean} numbered Determines if the rows will be numbered
      */
     constructor(container, columns, data, {
-        numbered = true
+        numbered = false
     } = {}) {
         super({ container })
 
         this.#columns = columns
         this.#data = data
-        this.#numbered = numbered
+        
+        // Adds numbered column
+        if (numbered) {
+            this.#columns.unshift({
+                key: "#",
+                content: (rowData, index) => index + 1,
+                width: "50px"
+            })
+        }
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
@@ -67,22 +72,9 @@ class Grid extends Component {
         return column.display
     }
 
-    #getNumberCell(content) {
-        return Component.createElement({
-            classAttr: "grid-cell",
-            content
-        })
-    }
-
     #renderHeader() {
         this.#header.innerHTML = ""
         let layout = `--layout:`
-
-        // Adds header for row numbers
-        if (this.#numbered) {
-            this.#header.appendChild(this.#getNumberCell("#"))
-            layout += " 50px"
-        }
 
         for (let column of this.#columns) {
             layout += ` ${column.width ?? "1fr"}`
@@ -105,12 +97,10 @@ class Grid extends Component {
                 classAttr: "grid-row"
             })
 
-            if (this.#numbered) rowElem.appendChild(this.#getNumberCell(index + 1))
-            
             for (let column of this.#columns) {
                 rowElem.appendChild(Component.createElement({
                     classAttr: "grid-cell",
-                    content: column.content ? column.content(row) : row[column.key] ?? "&mdash;"
+                    content: column.content ? column.content(row, index) : row[column.key] ?? "&mdash;"
                 }))
             }
 
