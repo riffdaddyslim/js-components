@@ -1,12 +1,39 @@
+@charset "UTF-8";
 .grid-header, .grid-row {
   display: grid;
   grid-template-columns: var(--layout);
+  align-items: center;
 }
 .grid-header {
   font-weight: bold;
 }
 .grid-cell {
   padding: 1rem;
+}
+.grid-body details {
+  cursor: pointer;
+}
+.grid-body details summary {
+  list-style: none;
+}
+.grid-body details summary::-webkit-details-marker {
+  display: none;
+}
+.grid-body details .expandIcon::before {
+  content: "🞤";
+  color: var(--green);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.grid-body details[open] .expandIcon::before {
+  content: "🞫";
+  color: var(--red);
+}
+.grid-expand {
+  padding: 0 1rem 1rem 1rem;
 }
 .grid-footer {
   text-align: right;

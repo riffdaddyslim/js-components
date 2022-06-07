@@ -3,6 +3,7 @@
     &-row {
         display: grid;
         grid-template-columns: var(--layout);
+        align-items: center;
     }
 
     &-header {
@@ -11,6 +12,39 @@
 
     &-cell {
         padding: 1rem;
+    }
+
+    &-body {
+        & details {
+            cursor: pointer;
+
+            & summary { 
+                list-style: none;
+    
+                &::-webkit-details-marker {
+                    display: none;
+                }
+            }
+
+            & .expandIcon::before {
+                content: "🞤";
+                color: var(--green);
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+            }
+
+            &[open] .expandIcon::before {
+                content: "🞫";
+                color: var(--red);
+            }
+        }
+    }
+
+    &-expand {
+        padding: 0 1rem 1rem 1rem;
     }
 
     &-footer {
