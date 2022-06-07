@@ -11,10 +11,6 @@
     "dev": "set NODE_ENV=dev&&nodemon index.js -e js,scss,html",
     "initialize": "npm i && npm run compile && npm run docs && node index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://riffletyler30216@dev.azure.com/riffletyler30216/JS%20Components/_git/JS%20Components"
-  },
   "author": "Tyler Riffle",
   "license": "ISC",
   "devDependencies": {
