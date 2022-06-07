@@ -48,10 +48,14 @@ class Grid extends Component {
     } = {}) {
         super({ container })
 
+        Component.test({columns}, Component.isArr, { type: "Array" })
         this.#columns = columns
+
+        Component.test({data}, Component.isArr, { type: "Array" })
         this.#data = data
         
         // Adds numbered column
+        Component.test({numbered}, Component.isBool, { type: "Boolean" })
         if (numbered) {
             this.#columns.unshift({
                 display: "#",
@@ -60,6 +64,7 @@ class Grid extends Component {
             })
         }
 
+        Component.test({expand}, Component.isFunction, { type: "Function" })
         this.#expand = expand
         if (this.#expand) {
             this.#columns.unshift({
