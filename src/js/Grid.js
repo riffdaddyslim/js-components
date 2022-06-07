@@ -105,13 +105,12 @@ class Grid extends Component {
                 classAttr: "grid-row"
             })
 
-            console.log(this.#numbered)
             if (this.#numbered) rowElem.appendChild(this.#getNumberCell(index + 1))
             
             for (let column of this.#columns) {
                 rowElem.appendChild(Component.createElement({
                     classAttr: "grid-cell",
-                    content: column.content ? column.content(row) : row[column.key]
+                    content: column.content ? column.content(row) : row[column.key] ?? "&mdash;"
                 }))
             }
 
