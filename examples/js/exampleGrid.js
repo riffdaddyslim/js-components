@@ -20,9 +20,7 @@ const COLUMNS = [
         content: (rowData) => rowData.gender.toUpperCase(),
         key: "gender",
         display: "M/F", 
-        width: "100px",
-        active: false,
-        validate: (value) => ["m", "f"].includes(value)
+        width: "100px"
     },
     {
         content: (rowData) => rowData.shoe instanceof Object ? `${rowData.shoe.size} - ${rowData.shoe.type}` : rowData.shoe,
@@ -146,54 +144,54 @@ export function buildGridOLD(container) {
         ],
         expand: { key: "additional", content: expandContent, expandIconColumn: "name" },
         data: GRID_DATA,
-        dynamicColumns: true,
-        search: true,
-        actions: {
-            edit: true,
-            undo: true,
-            save: true,
-            download: true,
-            print: true,
-        },
-        style: DataGrid.STYLE_TYPES.grouped,
-        groupKey: "lname",
-        minWidth: "500px",
-        styles: {
-            // isRounded: true,
-            // isBordered: true,
-            hasHover: true,
-            isStriped: true
-        }
+        // dynamicColumns: true,
+        // search: true,
+        // actions: {
+        //     edit: true,
+        //     undo: true,
+        //     save: true,
+        //     download: true,
+        //     print: true,
+        // },
+        // style: DataGrid.STYLE_TYPES.grouped,
+        // groupKey: "lname",
+        // minWidth: "500px",
+        // styles: {
+        //     // isRounded: true,
+        //     // isBordered: true,
+        //     hasHover: true,
+        //     isStriped: true
+        // }
     })
-    .addFilter({
-        id: "Gender",
-        label: "Gender:",
-        options: [
-            { value: "m", content: "Male" },
-            { value: "f", content: "Female" }
-        ],
-        filter(rowData, value) {
-            return rowData.gender === value
-        },
-        linkedColumn: "gender"
-    }).addFilter({
-        id: "expandable",
-        label: "IsExpandable:",
-        options: [
-            {value: "true", content: "True"},
-            {value: "false", content: "False"}
-        ],
-        filter(rowData, value) {
-            if (value === "true") return rowData.additional ? true : false
-            else return rowData.additional ? false : true
-        }
-    })
-    .contextMenu([
-        { type: "print" },
-        { type: "save" },
-        { type: "download" },
-        { type: "edit" },
-        { type: "undo" }
-    ])
+    // .addFilter({
+    //     id: "Gender",
+    //     label: "Gender:",
+    //     options: [
+    //         { value: "m", content: "Male" },
+    //         { value: "f", content: "Female" }
+    //     ],
+    //     filter(rowData, value) {
+    //         return rowData.gender === value
+    //     },
+    //     linkedColumn: "gender"
+    // }).addFilter({
+    //     id: "expandable",
+    //     label: "IsExpandable:",
+    //     options: [
+    //         {value: "true", content: "True"},
+    //         {value: "false", content: "False"}
+    //     ],
+    //     filter(rowData, value) {
+    //         if (value === "true") return rowData.additional ? true : false
+    //         else return rowData.additional ? false : true
+    //     }
+    // })
+    // .contextMenu([
+    //     { type: "print" },
+    //     { type: "save" },
+    //     { type: "download" },
+    //     { type: "edit" },
+    //     { type: "undo" }
+    // ])
 }
 
