@@ -207,7 +207,7 @@ class Grid extends Component {
             temp_data = temp_data.filter((item, index) => {
                 for (let column of this.#columns) {
                     if (!column.key) continue
-                    const CONTENT = String(this.#getCellContent(index + 1, item, column)).toLowerCase()
+                    const CONTENT = String(this.#getCellContent(index, item, column)).toLowerCase()
                     if (CONTENT.includes(this.#searchValue)) return true
                 }
                 return false
