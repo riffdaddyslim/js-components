@@ -25,6 +25,9 @@ class Grid extends Component {
         desc: "desc"
     }
 
+    #actionBar = Component.createElement({
+        classAttr: "grid-action-bar"
+    })
     #header = Component.createElement({
         classAttr: "grid-header"
     })
@@ -35,6 +38,16 @@ class Grid extends Component {
         classAttr: "grid-footer"
     })
 
+    #searchBar = Component.createElement({
+        element: "input",
+        classAttr: "grid-search-bar",
+        attrSet: {
+            type: "search",
+            placeholder: "Search...",
+            incremental: true
+        }
+    })
+
     #columns = null
     
     // Optional Params
@@ -42,7 +55,11 @@ class Grid extends Component {
     #expand
     #sortable
     #selectable
+    #search
+    
+    // Program Vars
     #checkAll = false
+    #searchValue = null
 
     /**
      * JS Grid Component
@@ -59,7 +76,8 @@ class Grid extends Component {
         expand = null,
         numbered = false,
         sortable = true,
-        selectable = null
+        selectable = null,
+        search = true
     } = {}) {
         super({ container })
 
@@ -105,10 +123,18 @@ class Grid extends Component {
         this.#sortable = sortable
         this.sortKey = null
         this.sortDirection = null
+
+        Component.test({search}, Component.isBool, { type: "Boolean" })
+        this.#search = search
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
         if (renderType === Component.RENDER_TYPES.full) {
+            if (this.#search) {
+                this.container.appendChild(this.#actionBar)
+
+                this.#renderActionBar()
+            }
             this.container.appendChild(this.#header)
             this.container.appendChild(this.#body)
             this.container.appendChild(this.#footer)
@@ -128,6 +154,12 @@ class Grid extends Component {
         }
         if (column.key) return column.key.toUpperCase()
         return ""
+    }
+
+    #renderActionBar() {
+        if (this.#search) {
+            this.#actionBar.appendChild(this.#searchBar)
+        }
     }
 
     #renderHeader() {
@@ -170,6 +202,18 @@ class Grid extends Component {
         let temp_data = JSON.parse(JSON.stringify(this.#data))
         if (this.#sortable && this.sortKey && this.sortDirection) this.#sort(temp_data)
 
+        // Search filtering
+        if (this.#searchValue) {
+            temp_data = temp_data.filter((item, index) => {
+                for (let column of this.#columns) {
+                    if (!column.key) continue
+                    const CONTENT = String(this.#getCellContent(index + 1, item, column)).toLowerCase()
+                    if (CONTENT.includes(this.#searchValue)) return true
+                }
+                return false
+            })
+        }
+
         temp_data.forEach((row, index) => {
             let rowElem = Component.createElement({
                 element: this.#expand ? "summary" : "div",
@@ -204,7 +248,14 @@ class Grid extends Component {
     }
 
     #linkEvents(renderType) {
-        if (renderType === Component.RENDER_TYPES.full) {}
+        if (renderType === Component.RENDER_TYPES.full) {
+            if (this.#search) {
+                this.#searchBar.addEventListener("search", () => {
+                    this.#searchValue = this.#searchBar.value.toLowerCase()
+                    this.render(Component.RENDER_TYPES.partial)
+                })
+            }
+        }
 
         this.#header.querySelectorAll(".grid-cell[data-key]").forEach(cell => {
             cell.addEventListener("click", e => {
