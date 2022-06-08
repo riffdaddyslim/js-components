@@ -1,5 +1,6 @@
 export const GRID_DATA = [
     {
+        id: 1,
         fname: "Tyler",
         lname: "Riffle",
         dob: "09/04/1997",
@@ -7,6 +8,7 @@ export const GRID_DATA = [
         shoe: 15
     },
     {
+        id: 2,
         fname: "Hannah",
         lname: "Greeley",
         dob: "03/19/2000",
@@ -21,6 +23,7 @@ export const GRID_DATA = [
         }
     },
     {
+        id: 3,
         fname: "Mark",
         lname: "Riffle",
         dob: "07/18/1976",
@@ -28,6 +31,7 @@ export const GRID_DATA = [
         shoe: 13
     },
     {
+        id: 4,
         fname: "Olivia",
         lname: "Riffle",
         dob: "09/17/2019",
@@ -45,6 +49,7 @@ export const GRID_DATA = [
         }
     },
     {
+        id: 5,
         fname: "Riley",
         lname: "Riffle",
         dob: "09/30/2000",
@@ -59,6 +64,7 @@ export const GRID_DATA = [
         }
     },
     { 
+        id: 6,
         fname: "Elizabeth",
         lname: "Riffle",
         dob: "01/04/1974",
@@ -66,6 +72,7 @@ export const GRID_DATA = [
         shoe: 11
     },
     {
+        id: 7,
         fname: "Trinity",
         lname: "Riffle",
         dob: "01/08/2005",
