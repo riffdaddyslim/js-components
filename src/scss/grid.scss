@@ -1,4 +1,15 @@
 .grid {
+    &-action-bar {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &-search-bar {
+        padding: .5rem;
+        width: 450px;
+    }
+
     &-header,
     &-row {
         display: grid;

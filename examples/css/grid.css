@@ -1,4 +1,13 @@
 @charset "UTF-8";
+.grid-action-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+.grid-search-bar {
+  padding: 0.5rem;
+  width: 450px;
+}
 .grid-header, .grid-row {
   display: grid;
   grid-template-columns: var(--layout);
