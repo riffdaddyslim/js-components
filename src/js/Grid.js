@@ -48,7 +48,7 @@ class Grid extends Component {
         }
     })
 
-    #columns = null
+    #columnData = null
     
     // Optional Params
     #data
@@ -56,6 +56,7 @@ class Grid extends Component {
     #sortable
     #selectable
     #search
+    #uniqueIdentifier
     
     // Program Vars
     #checkAll = false
@@ -70,28 +71,33 @@ class Grid extends Component {
      * @param {Boolean} [numbered=false] Determines if the rows will be numbered
      * @param {Boolean} [sortable=true] Determines if the column headers can be used to sort the data
      * @param {String} [selectable=null] Key for value that is used to identify selected row
+     * @param {String} [uniqueIdentifier=id] Unique identifier for each row in the given data
      */
-    constructor(container, columns, {
+    constructor(container, columnData, {
         data = null,
         expand = null,
         numbered = false,
         sortable = true,
         selectable = null,
-        search = true
+        search = true,
+        uniqueIdentifier = "id"
     } = {}) {
         super({ container })
 
-        Component.test({columns}, Component.isArr, { type: "Array" })
-        this.#columns = columns
-
+        Component.test({columnData}, Component.isArr, { type: "Array" })
+        this.#columnData = columnData
+        
         Component.test({data}, Component.isArr, { type: "Array", nullable: true })
         this.#data = data
         
+        Component.test({uniqueIdentifier}, Component.isString)
+        this.#uniqueIdentifier = uniqueIdentifier
+
         Component.test({numbered}, Component.isBool, { type: "Boolean" })
         if (numbered) {
-            this.#columns.unshift({
+            this.#columnData.unshift({
                 display: "#",
-                content: (rowData, index) => index + 1,
+                content: ({ index }) => index + 1,
                 width: "50px",
                 sortable: false
             })
@@ -100,9 +106,9 @@ class Grid extends Component {
         Component.test({selectable}, Component.isString, { nullable: true })
         this.#selectable = selectable
         if (this.#selectable) {
-            this.#columns.push({
+            this.#columnData.push({
                 display: () => `<input type="checkbox" id="cb_checkAll" ${this.#checkAll ? "checked" : ""}>`,
-                content: (rowData, index) => `<input type="checkbox" id="cb_row${index}" data-id="${rowData[this.#selectable]}" ${rowData.selected ? "checked" : ""}>`,
+                content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-id="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
                 sortable: false
             })
@@ -111,10 +117,10 @@ class Grid extends Component {
         Component.test({expand}, Component.isFunction, { type: "Function", nullable: true })
         this.#expand = expand
         if (this.#expand) {
-            this.#columns.unshift({
+            this.#columnData.unshift({
                 content: () => `<span class="expandIcon"></span>`,
                 width: "50px",
-                id: "expand",
+                columnId: "expand",
                 sortable: false
             })
         }
@@ -126,6 +132,7 @@ class Grid extends Component {
 
         Component.test({search}, Component.isBool, { type: "Boolean" })
         this.#search = search
+
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
@@ -147,12 +154,12 @@ class Grid extends Component {
         this.#linkEvents(renderType)
     }
 
-    #getHeaderDisplay(column) {
-        if (column.display) {
-            if (typeof(column.display) === "function") return column.display()
-            return column.display
+    #getHeaderDisplay(columnData) {
+        if (columnData.display) {
+            if (typeof(columnData.display) === "function") return columnData.display()
+            return columnData.display
         }
-        if (column.key) return column.key.toUpperCase()
+        if (columnData.key) return columnData.key.toUpperCase()
         return ""
     }
 
@@ -166,16 +173,16 @@ class Grid extends Component {
         this.#header.innerHTML = ""
         let layout = `--layout:`
 
-        for (let column of this.#columns) {
-            layout += ` ${column.width ?? "1fr"}`
+        for (let columnData of this.#columnData) {
+            layout += ` ${columnData.width ?? "1fr"}`
 
             const DATASET = {}
-            if (this.#sortable && column.sortable != false && column.key) DATASET.key = column.key
-            if (this.sortKey === column.key) DATASET.direction = this.sortDirection
+            if (this.#sortable && columnData.sortable != false && columnData.key) DATASET.key = columnData.key
+            if (this.sortKey === columnData.key) DATASET.direction = this.sortDirection
             
             const COLUMN = Component.createElement({
                 classAttr: "grid-cell",
-                content: this.#getHeaderDisplay(column),
+                content: this.#getHeaderDisplay(columnData),
                 dataset: DATASET
             })
 
@@ -186,65 +193,90 @@ class Grid extends Component {
         this.container.setAttribute("style", layout)
     }
 
-    #getCellContent(index, row, column) {
-        let content = column.content ? column.content(row, index) : row[column.key] ?? "&mdash;"
-
+    #getCellContent(columnData, rowData) {
+        const INDEX = this.#data.findIndex(item => item[this.#uniqueIdentifier] === rowData[this.#uniqueIdentifier])
+        
         // Removed icon for expand if expand function returns false
-        if (column.id === "expand" && !this.#expand(row)) content = "" 
-
-        return content
+        if (columnData.gridId === "expand" && !this.#expand(rowData)) return "" 
+        if (columnData.content) return columnData.content({ columnData, rowData, index: INDEX })
+        return rowData[columnData.key] ?? "&mdash;"
     }
 
     #renderBody() {
         this.#body.innerHTML = ""
         if (!this.#data) return this.#body.innerHTML = "<div class='grid-no-data'>There is no data to display</div>"
 
-        let temp_data = JSON.parse(JSON.stringify(this.#data))
-        if (this.#sortable && this.sortKey && this.sortDirection) this.#sort(temp_data)
+        let tempData = JSON.parse(JSON.stringify(this.#data))
+        if (this.#sortable && this.sortKey && this.sortDirection) this.#sort(tempData)
 
         // Search filtering
         if (this.#searchValue) {
-            temp_data = temp_data.filter((item, index) => {
-                for (let column of this.#columns) {
-                    if (!column.key) continue
-                    const CONTENT = String(this.#getCellContent(index, item, column)).toLowerCase()
+            tempData = tempData.filter((rowData) => {
+                for (let columnData of this.#columnData) {
+                    if (!columnData.key) continue
+                    const CONTENT = String(this.#getCellContent(columnData, rowData)).toLowerCase()
                     if (CONTENT.includes(this.#searchValue)) return true
                 }
                 return false
             })
         }
 
-        temp_data.forEach((row, index) => {
-            let rowElem = Component.createElement({
+        if (tempData.length === 0) return this.#body.innerHTML = "<div class='grid-no-data'>No data matched the search</div>"
+        tempData.forEach(rowData => {
+            const ROW_DATASET = {}
+            if (rowData.dataset) {
+                for (let key in rowData.dataset) {
+                    ROW_DATASET[key] = rowData.dataset[key]
+                }
+            }
+
+            let row = Component.createElement({
                 element: this.#expand ? "summary" : "div",
                 classAttr: "grid-row",
-                id: `row${index}`
+                id: `row${rowData.id}`,
+                dataset: ROW_DATASET
             })
 
-            for (let column of this.#columns) {
-                rowElem.appendChild(Component.createElement({
+            for (let columnData of this.#columnData) {
+                row.appendChild(Component.createElement({
                     classAttr: "grid-cell",
-                    content: this.#getCellContent(index, row, column)
+                    content: this.#getCellContent(columnData, rowData)
                 }))
             }
 
-            if (this.#expand && this.#expand(row)) {
+            if (this.#expand && this.#expand(rowData)) {
                 const DETAILS = Component.createElement({
                     element: "details"
                 })
-                DETAILS.appendChild(rowElem)
+                DETAILS.appendChild(row)
                 DETAILS.appendChild(Component.createElement({
                     classAttr: "grid-expand",
-                    content: this.#expand(row)
+                    content: this.#expand(rowData)
                 }))
                 this.#body.appendChild(DETAILS)
             }
-            else this.#body.appendChild(rowElem)
+            else this.#body.appendChild(row)
         })
     }
 
     #renderFooter() {
         this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
+    }
+
+    /**
+     * Updates a row's dataset values and a adds items to data row's dataset key
+     * @param {string} id id of the row
+     */
+    #updateRow(id, data) {
+        const ROW_DATA = this.#data.find(rowData => rowData[this.#uniqueIdentifier] == id)
+        if (!ROW_DATA.dataset) ROW_DATA.dataset = {}
+
+        const ROW = this.#body.querySelector(`#row${id}`)
+
+        for (let key in data) {
+            ROW.dataset[key] = data[key]
+            ROW_DATA.dataset[key] = data[key]
+        }
     }
 
     #linkEvents(renderType) {
@@ -276,30 +308,32 @@ class Grid extends Component {
 
         if (this.#selectable) {
             this.#header.querySelector("#cb_checkAll").addEventListener("change", e => {
-                const CHECKED = e.target.checked
-                const IDS = []
+                this.#checkAll = e.target.checked
+                const CB_IDS = []
                 this.#body.querySelectorAll("[id^=cb_row]").forEach(cb => { 
-                    if (cb.checked === CHECKED) return
-                    cb.checked = CHECKED
-                    const ROW = this.#data.find(item => item.id == cb.dataset.id)
-                    IDS.push(cb.dataset.id)
-                    ROW.selected =CHECKED
+                    if (cb.checked === this.#checkAll) return
+
+                    cb.checked = this.#checkAll
+                    CB_IDS.push(cb.dataset[this.#uniqueIdentifier])
+
+                    this.#updateRow(cb.dataset[this.#uniqueIdentifier], {
+                        selected: this.#checkAll
+                    })
                 })
 
-                this.#checkAll = CHECKED
 
                 const EVENT = new CustomEvent("selectAll", { detail: {
-                    ids: IDS,
-                    checked: CHECKED
+                    ids: CB_IDS,
+                    checked: this.#checkAll
                 }})
                 this.container.dispatchEvent(EVENT)
             })
 
             this.#body.querySelectorAll("[id^=cb_row]").forEach(cb => {
                 cb.addEventListener("change", () => {
-                    const ROW = this.#data.find(item => item.id == cb.dataset.id)
-                    if (cb.checked) ROW.selected = true
-                    else ROW.selected = false
+                   this.#updateRow(cb.dataset[this.#uniqueIdentifier], {
+                        selected: cb.checked
+                    })
                     
                     const EVENT = new CustomEvent("rowSelected", { detail: {
                         id: cb.dataset.id,
@@ -312,36 +346,36 @@ class Grid extends Component {
     }
 
     /**
-     * Function for sorting data. Supports strings, int, and date formats
-     * @param {string} type Matches a key from data
+     * Function for sorting objects within data array. Supports strings, int, and date formats
+     * @param {string} type Matches a key from object in data array
      * @param {string} direction asc or desc
      */
      #sort(data, { key=this.sortKey, direction=this.sortDirection } = {}) {
         data.sort((a, b) => {
-            const trueValue = (value) => { return direction == Grid.SORT_DIRECTIONS.desc ? value * -1 : value }
+            const sortValue = (value) => { return direction == Grid.SORT_DIRECTIONS.desc ? value * -1 : value }
         
-            const getValue = (data) => {
-                const column = this.#columns.find(column => column.key === key)
-                const VALUE = column.content ? column.content(data).toString() : data[key]
+            const getCellValue = (rowData) => {
+                const COLUMN_DATA = this.#columnData.find(columnData => columnData.key === key)
+                const CONTENT = String(this.#getCellContent(COLUMN_DATA, rowData))
                 
-                if (column.sortType) {
-                    switch (column.sortType) {
-                        case "int": return (parseInt(VALUE.match(/\d+/)))
+                if (COLUMN_DATA.sortType) {
+                    switch (COLUMN_DATA.sortType) {
+                        case "int": return (parseInt(CONTENT.replace(/\D/ig, "")))
                         case "date":
                         case "datetime":
-                             return new Date(data[key]).getTime()
-                        default: return VALUE
+                            return new Date(rowData[key]).getTime()
+                        default: return CONTENT
                     }
                 }
 
-                return VALUE
+                return CONTENT
             }
             
-            if (getValue(a) === null) return trueValue(1)
-            if (getValue(b) === null) return trueValue(-1)
+            if (getCellValue(a) === null) return getCellValue(1)
+            if (getCellValue(b) === null) return getCellValue(-1)
         
-            if (getValue(a) === getValue(b)) return 0
-            return getValue(a) > getValue(b) ? trueValue(1) : trueValue(-1)
+            if (getCellValue(a) === getCellValue(b)) return 0
+            return getCellValue(a) > getCellValue(b) ? sortValue(1) : sortValue(-1)
         })
     }
 }

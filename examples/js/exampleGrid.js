@@ -4,7 +4,7 @@ import { GRID_DATA } from "./data.js"
 
 const COLUMNS = [
     {
-        content: (rowData) => {
+        content: ({rowData}) => {
             return `${rowData.lname}, ${rowData.fname}`
         },
         key: "name",
@@ -17,13 +17,13 @@ const COLUMNS = [
         sortType: "date"
     },
     {
-        content: (rowData) => rowData.gender.toUpperCase(),
+        content: ({rowData}) => rowData.gender.toUpperCase(),
         key: "gender",
         display: "M/F", 
         width: "100px"
     },
     {
-        content: (rowData) => rowData.shoe instanceof Object ? `${rowData.shoe.size} - ${rowData.shoe.type}` : rowData.shoe,
+        content: ({rowData}) => rowData.shoe instanceof Object ? `${rowData.shoe.size} - ${rowData.shoe.type}` : rowData.shoe,
         key: "size",
         display: "Shoe Size",
         width: "150px",
@@ -31,11 +31,11 @@ const COLUMNS = [
     }
 ]
 
-function expand(row) {
-    if (!row.additional) return false
+function expand(rowData) {
+    if (!rowData.additional) return false
     return `
-        <p>Height: ${row.additional.height.feet}'${row.additional.height.inch}"</p>
-        <p>Hair: ${row.additional.hair}</p>
+        <p>Height: ${rowData.additional.height.feet}'${rowData.additional.height.inch}"</p>
+        <p>Hair: ${rowData.additional.hair}</p>
     `
 }
 
