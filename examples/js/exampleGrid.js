@@ -79,7 +79,11 @@ const CONFIG = {
                 <p>${rowData.ReadyWeek}</p>
                 `
         },
-        selectable: true
+        selectable: true,
+        pagination: {
+            rowsPerPage: 5,
+            rowsPerPageIncrement: 5
+        }
     }
 }
 

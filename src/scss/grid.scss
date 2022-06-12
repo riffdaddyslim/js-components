@@ -88,6 +88,17 @@
         text-align: right;
         padding: 1rem;
     }
+
+
+    &-select {
+        &-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        padding: .5rem;
+    }
 }
 
 // .grid {

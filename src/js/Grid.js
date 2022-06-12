@@ -8,7 +8,7 @@
 import Component from "./Component.js"
 
 /**
- * @memberof DataGrid
+ * @memberof Grid
  * @typedef {Object} ColumnItem Object used to define params for each grid column
  * @property {String} [key=null] Identifier for the column
  * @property {Function} [content=value for key] Function to create content given row data
@@ -16,6 +16,16 @@ import Component from "./Component.js"
  * @property {String} [width=1fr] Determines width of the column
  * @property {String} [id=null] Used internally to identify programatically added columns
  * @property {Boolean} [sortable=true] Used to determine if given column is sortable
+ */
+
+/**
+ * @memberof Grid
+ * @typedef {Object} PaginationConfig Config options for the pagination of the grid
+ * @property {Number} [rowsPerPage=10] Number of results per page
+ * @property {Number} [startPage=1] Page to start the results on load
+ * @property {Boolean} [dynamicRows=true] Allow user to change number of rows per page
+ * @property {Number} [rowsPerPageIncrement=10] Determines the increment that the rows per page can be changed by if dynamicRows is true
+ * @property {Boolean} [goTo=true] Allow user to select the page they would like to go to without using the prev, next. If false user will only be able to just to the first, last, previous, or next pages 
  */
 
 class Grid extends Component {
@@ -57,10 +67,12 @@ class Grid extends Component {
     #selectable
     #search
     #uniqueIdentifier
+    #pagination
     
     // Program Vars
     #checkAll = false
     #searchValue = null
+    #rowSelects = null
 
     /**
      * JS Grid Component
@@ -70,8 +82,9 @@ class Grid extends Component {
      * @param {Function} [expand=null] Function used to display expand data
      * @param {Boolean} [numbered=false] Determines if the rows will be numbered
      * @param {Boolean} [sortable=true] Determines if the column headers can be used to sort the data
-     * @param {String} [selectable=null] Key for value that is used to identify selected row
+     * @param {Boolean} [selectable=false] Key for value that is used to identify selected row
      * @param {String} [uniqueIdentifier=id] Unique identifier for each row in the given data
+     * @param {PaginationConfig} [uniqueIdentifier=id] Unique identifier for each row in the given data
      */
     constructor(container, columnData, {
         data = null,
@@ -80,7 +93,8 @@ class Grid extends Component {
         sortable = true,
         selectable = false,
         search = true,
-        uniqueIdentifier = "id"
+        uniqueIdentifier = "id",
+        pagination = null
     } = {}) {
         super({ container })
 
@@ -133,25 +147,77 @@ class Grid extends Component {
         Component.test({search}, Component.isBool, { type: "Boolean" })
         this.#search = search
 
+        this.#pagination = {
+            rowsPerPage: 10,
+            startPage: 0,
+            dynamicRows: true,
+            rowsPerPageIncrement: 10,
+            goTo: true,
+            seletedIndex: 0
+        }
+        if (pagination != true) {
+            Component.test({pagination}, Component.isObj, { nullable: true, type: "PaginationConfig" })
+            this.#pagination = {...this.#pagination, ...pagination}
+        }
+
+        this.#pagination.totalPages = Math.ceil(this.#data.length / this.#pagination.rowsPerPage)
+        this.#pagination.totalRows = Math.ceil(this.#data.length / 10) * 10
+        this.#pagination.currentPage = this.#pagination.startPage
+         
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
                 this.container.appendChild(this.#actionBar)
-
                 this.#renderActionBar()
             }
             this.container.appendChild(this.#header)
             this.container.appendChild(this.#body)
+
             this.container.appendChild(this.#footer)
+            this.#renderFooter()
+
+            this.#rowSelects = this.container.querySelectorAll(".row-count-select")
         }
 
         this.#renderHeader()
         this.#renderBody()
-        this.#renderFooter()
 
         this.#linkEvents(renderType)
+    }
+
+    #getRowsPerPageComponent() {
+        const createOption = (value) => {
+            return Component.createElement({
+                element: "option",
+                content: value,
+                attrSet: {
+                    value
+                }
+            })
+        }
+        
+        const CONTAINER = Component.createElement({ classAttr: "grid-select-container" })
+        CONTAINER.appendChild(Component.createElement({ content: "Rows:" }))
+
+        const SELECT = Component.createElement({
+            element: "select",
+            classAttr: "grid-select row-count-select"
+        })
+        CONTAINER.appendChild(SELECT)
+
+        for (let value = this.#pagination.rowsPerPage; value < this.#pagination.totalRows; value += this.#pagination.rowsPerPageIncrement) {
+            SELECT.appendChild(createOption(value))
+        }
+        SELECT.appendChild(createOption(this.#pagination.totalRows))
+
+        return CONTAINER
+    }
+
+    #renderActionBar() {
+        if (this.#pagination) this.#actionBar.appendChild(this.#getRowsPerPageComponent())
+        if (this.#search) this.#actionBar.appendChild(this.#searchBar)
     }
 
     #getHeaderDisplay(columnData) {
@@ -161,12 +227,6 @@ class Grid extends Component {
         }
         if (columnData.key) return columnData.key.toUpperCase()
         return ""
-    }
-
-    #renderActionBar() {
-        if (this.#search) {
-            this.#actionBar.appendChild(this.#searchBar)
-        }
     }
 
     #renderHeader() {
@@ -223,6 +283,11 @@ class Grid extends Component {
         }
 
         if (tempData.length === 0) return this.#body.innerHTML = "<div class='grid-no-data'>No data matched the search</div>"
+        else {
+            const START_INDEX = this.#pagination.currentPage * this.#pagination.rowsPerPage
+            tempData = tempData.slice(START_INDEX, START_INDEX + this.#pagination.rowsPerPage)
+        }
+
         tempData.forEach(rowData => {
             const ROW_DATASET = {}
             if (rowData.dataset) {
@@ -261,7 +326,11 @@ class Grid extends Component {
     }
 
     #renderFooter() {
-        this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
+        this.#footer.innerHTML = ""
+        if (this.#pagination) {
+            this.#footer.appendChild(this.#getRowsPerPageComponent())
+        }
+        //this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
     }
 
     /**
@@ -280,12 +349,31 @@ class Grid extends Component {
         }
     }
 
+    #updateRowsPerPageSelects() {
+        this.#rowSelects.forEach(select => {
+            select.seletedIndex = this.#pagination.seletedIndex
+            select.value = this.#pagination.rowsPerPage
+        })
+    }
+
     #linkEvents(renderType) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
                 this.#searchBar.addEventListener("search", () => {
                     this.#searchValue = this.#searchBar.value.toLowerCase()
                     this.render(Component.RENDER_TYPES.partial)
+                })
+            }
+
+            if (this.#pagination) {
+                this.#rowSelects.forEach(select => {
+                    select.addEventListener("change", () => {
+                        this.#pagination.rowsPerPage = select.value
+                        this.#pagination.seletedIndex = select.seletedIndex
+
+                        this.#updateRowsPerPageSelects()
+                        this.render(Component.RENDER_TYPES.partial)
+                    })
                 })
             }
         }

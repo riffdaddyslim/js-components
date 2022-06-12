@@ -69,3 +69,11 @@
   text-align: right;
   padding: 1rem;
 }
+.grid-select {
+  padding: 0.5rem;
+}
+.grid-select-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
