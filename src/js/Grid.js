@@ -78,7 +78,7 @@ class Grid extends Component {
         expand = null,
         numbered = false,
         sortable = true,
-        selectable = null,
+        selectable = false,
         search = true,
         uniqueIdentifier = "id"
     } = {}) {
@@ -103,12 +103,12 @@ class Grid extends Component {
             })
         }
 
-        Component.test({selectable}, Component.isString, { nullable: true })
+        Component.test({selectable}, Component.isBool)
         this.#selectable = selectable
         if (this.#selectable) {
             this.#columnData.push({
                 display: () => `<input type="checkbox" id="cb_checkAll" ${this.#checkAll ? "checked" : ""}>`,
-                content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-id="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
+                content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-${this.#uniqueIdentifier}="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
                 sortable: false
             })
@@ -199,7 +199,8 @@ class Grid extends Component {
         // Removed icon for expand if expand function returns false
         if (columnData.gridId === "expand" && !this.#expand(rowData)) return "" 
         if (columnData.content) return columnData.content({ columnData, rowData, index: INDEX })
-        return rowData[columnData.key] ?? "&mdash;"
+        if (rowData[columnData.key] === "" || rowData[columnData.key] === null || rowData[columnData.key] === undefined) return "&mdash;"
+        return String(rowData[columnData.key])
     }
 
     #renderBody() {
@@ -233,7 +234,7 @@ class Grid extends Component {
             let row = Component.createElement({
                 element: this.#expand ? "summary" : "div",
                 classAttr: "grid-row",
-                id: `row${rowData.id}`,
+                id: `row${rowData[this.#uniqueIdentifier]}`,
                 dataset: ROW_DATASET
             })
 
@@ -336,7 +337,7 @@ class Grid extends Component {
                     })
                     
                     const EVENT = new CustomEvent("rowSelected", { detail: {
-                        id: cb.dataset.id,
+                        id: cb.dataset[this.#uniqueIdentifier],
                         checked: cb.checked
                     }})
                     this.container.dispatchEvent(EVENT)

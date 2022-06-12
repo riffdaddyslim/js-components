@@ -1,51 +1,90 @@
 import Grid from "../components/Grid.js"
 import DataGrid from "../components/Grid_OLD.js"
 import { GRID_DATA } from "./data.js"
+import { VEG_DATA } from "./vegetableInfo.js"
 
-const COLUMNS = [
-    {
-        content: ({rowData}) => {
-            return `${rowData.lname}, ${rowData.fname}`
+const KEY = "veg"
+
+const COLUMNS = {
+    people: [
+        {
+            content: ({rowData}) => {
+                return `${rowData.lname}, ${rowData.fname}`
+            },
+            key: "name",
+            display: "Last, First"
         },
-        key: "name",
-        display: "Last, First"
-    },
-    {
-        key: "dob",
-        display: "DOB",
-        width: "150px",
-        sortType: "date"
-    },
-    {
-        content: ({rowData}) => rowData.gender.toUpperCase(),
-        key: "gender",
-        display: "M/F", 
-        width: "100px"
-    },
-    {
-        content: ({rowData}) => rowData.shoe instanceof Object ? `${rowData.shoe.size} - ${rowData.shoe.type}` : rowData.shoe,
-        key: "size",
-        display: "Shoe Size",
-        width: "150px",
-        sortType: "int"
-    }
-]
+        {
+            key: "dob",
+            display: "DOB",
+            width: "150px",
+            sortType: "date"
+        },
+        {
+            content: ({rowData}) => rowData.gender.toUpperCase(),
+            key: "gender",
+            display: "M/F", 
+            width: "100px"
+        },
+        {
+            content: ({rowData}) => rowData.shoe instanceof Object ? `${rowData.shoe.size} - ${rowData.shoe.type}` : rowData.shoe,
+            key: "size",
+            display: "Shoe Size",
+            width: "150px",
+            sortType: "int"
+        }
+    ],
+    veg: [
+        {
+            key: "vegName",
+            display: "Name"
+        },
+        {
+            key: "variety",
+            display: "Variety"
+        },
+        {
+            key: "credits",
+            display: "Credits", 
+            width: "125px",
+            sortType: "int"
+        },
+        {
+            content: ({rowData}) => `${rowData.packSize} / ${rowData.unit}`,
+            key: "size",
+            display: "Pack Size",
+            width: "200px",
+            sortType: "int"
+        },
+        {
+            key: "status",
+            display: "Status",
+            width: "200px"
+        }
+    ]
+}
 
-function expand(rowData) {
-    if (!rowData.additional) return false
-    return `
-        <p>Height: ${rowData.additional.height.feet}'${rowData.additional.height.inch}"</p>
-        <p>Hair: ${rowData.additional.hair}</p>
-    `
+const CONFIG = {
+    people: {
+        data: GRID_DATA,
+        numbered: true
+    },
+    veg: {
+        data: VEG_DATA,
+        uniqueIdentifier: "key",
+        expand(rowData) {
+            return `
+                <p>${rowData.cropNum}</p>
+                <p>${rowData.plantWeek}</p>
+                <p>${rowData.ReadyWeek}</p>
+                `
+        },
+        selectable: true
+    }
 }
 
 export function buildGrid(container) {
-    return new Grid(container, COLUMNS, {
-        data: GRID_DATA,
-        expand,
-        selectable: "id",
-        numbered: true
-    })
+    return new Grid(container, COLUMNS[KEY], CONFIG[KEY])
 }
 
 
