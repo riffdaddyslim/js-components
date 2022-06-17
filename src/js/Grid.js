@@ -414,7 +414,7 @@ class Grid extends Component {
             }))
         }
         else if (this.#pagination.currentPage === this.#pagination.totalPages) {
-            if (this.#pagination.totalPages > 4 + this.#pagination.currentPage) {
+            if (1 > 4 - this.#pagination.currentPage) {
                 this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
                 this.#paginationPageSeletion.appendChild(ELLIPSE)
             }
