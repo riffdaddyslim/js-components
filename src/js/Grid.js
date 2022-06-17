@@ -155,13 +155,14 @@ class Grid extends Component {
         
         if (this.#pagination != null) {
             this.#pagination = {
-                rowsPerPage: 10,
+                minRowsPerPage: 10,
                 startPage: 1,
                 dynamicRows: true,
                 rowsPerPageIncrement: 10,
                 goTo: true,
                 seletedIndex: 0
             }
+            this.#pagination.rowsPerPage = this.#pagination.minRowsPerPage
 
             if (pagination != true) {
                 Component.test({pagination}, Component.isObj, { nullable: true, type: "PaginationConfig" })
@@ -211,8 +212,8 @@ class Grid extends Component {
         return this.#pagination.currentPage + 1
     }
 
-    getTotalPages() {
-        return Math.ceil(this.#data.length / this.#pagination.rowsPerPage)
+    getTotalPages(data=this.#data) {
+        return Math.ceil(data.length / this.#pagination.rowsPerPage)
     }
 
     #getRowsPerPageComponent() {
@@ -235,7 +236,7 @@ class Grid extends Component {
         })
         CONTAINER.appendChild(SELECT)
 
-        for (let value = this.#pagination.rowsPerPage; value < this.#pagination.totalRows; value += this.#pagination.rowsPerPageIncrement) {
+        for (let value = this.#pagination.minRowsPerPage; value < this.#pagination.totalRows; value += this.#pagination.rowsPerPageIncrement) {
             SELECT.appendChild(createOption(value))
         }
         SELECT.appendChild(createOption(this.#pagination.totalRows))
@@ -313,6 +314,8 @@ class Grid extends Component {
         if (tempData.length === 0) return this.#body.innerHTML = "<div class='grid-no-data'>No data matched the search</div>"
         else {
             if (this.#pagination) {
+                this.#renderPaginationPageSelection(tempData)
+
                 const START_INDEX = (this.#pagination.currentPage - 1) * this.#pagination.rowsPerPage
                 tempData = tempData.slice(START_INDEX, START_INDEX + this.#pagination.rowsPerPage)
             }
@@ -355,7 +358,7 @@ class Grid extends Component {
         })
     }
 
-    #renderPaginationPageSelection() {
+    #renderPaginationPageSelection(data) {
         this.#paginationPageSeletion.innerHTML = ""
 
         const createPaginationBtn = ({ content=null, page=null, isCurrent=false} = {}) => {
@@ -381,9 +384,9 @@ class Grid extends Component {
                 }))
             }
         }
-
         const ELLIPSE = createPaginationBtn({ content: "..." })
         const FIRST_PAGE_BTN = createPaginationBtn({ page: 1 })
+        this.#pagination.totalPages = this.getTotalPages(data)
         const LAST_PAGE_BTN = createPaginationBtn({ page: this.#pagination.totalPages })
 
         
@@ -397,11 +400,17 @@ class Grid extends Component {
             })
             
             if (this.#pagination.totalPages > 4) this.#paginationPageSeletion.appendChild(ELLIPSE)
-            this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
+            if (this.#pagination.currentPage != this.#pagination.totalPages) this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
+            else this.#paginationPageSeletion.appendChild(createPaginationBtn({
+                content: 1,
+                isCurrent: true
+            }))
         }
         else if (this.#pagination.currentPage === this.#pagination.totalPages) {
-            this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
-            this.#paginationPageSeletion.appendChild(ELLIPSE)
+            if (this.#pagination.totalPages > 4 + this.#pagination.currentPage) {
+                this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
+                this.#paginationPageSeletion.appendChild(ELLIPSE)
+            }
 
             paginationLoop({
                 start: this.#pagination.totalPages - 3,
@@ -433,7 +442,6 @@ class Grid extends Component {
         if (this.#pagination) {
             this.#footer.appendChild(this.#getRowsPerPageComponent())
             this.#footer.appendChild(this.#paginationPageSeletion)
-            this.#renderPaginationPageSelection()
         }
         //this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
     }
@@ -456,13 +464,11 @@ class Grid extends Component {
 
     #updatePaginationElements() {
         this.#rowSelects.forEach(select => {
-            select.seletedIndex = this.#pagination.seletedIndex
             select.value = this.#pagination.rowsPerPage
         })
 
         this.#pagination.currentPage = 1
         this.#pagination.totalPages = this.getTotalPages()
-        this.#renderPaginationPageSelection()
     }
 
     #linkEvents(renderType) {
@@ -470,6 +476,7 @@ class Grid extends Component {
             if (this.#search) {
                 this.#searchBar.addEventListener("search", () => {
                     this.#searchValue = this.#searchBar.value.toLowerCase()
+                    if (this.#pagination) this.#pagination.currentPage = 1
                     this.render(Component.RENDER_TYPES.partial)
                 })
             }
@@ -477,8 +484,7 @@ class Grid extends Component {
             if (this.#pagination) {
                 this.#rowSelects.forEach(select => {
                     select.addEventListener("change", () => {
-                        this.#pagination.rowsPerPage = select.value
-                        this.#pagination.seletedIndex = select.seletedIndex
+                        this.#pagination.rowsPerPage = parseInt(select.value)
 
                         this.#updatePaginationElements()
                         this.render(Component.RENDER_TYPES.partial)
@@ -540,6 +546,15 @@ class Grid extends Component {
                     this.container.dispatchEvent(EVENT)
                 })
             })
+
+            if (this.#pagination) {
+                this.#paginationPageSeletion.querySelectorAll("button").forEach(button => {
+                    button.addEventListener("click", () => {
+                        this.#pagination.currentPage = parseInt(button.dataset.page)
+                        this.render(Component.RENDER_TYPES.partial)
+                    })
+                })
+            }
         }
     }
 
