@@ -58,6 +58,10 @@ class Grid extends Component {
         }
     })
 
+    #paginationPageSeletion = Component.createElement({
+        classAttr: "grid-pagination"
+    })
+
     #columnData = null
     
     // Optional Params
@@ -147,23 +151,31 @@ class Grid extends Component {
         Component.test({search}, Component.isBool, { type: "Boolean" })
         this.#search = search
 
-        this.#pagination = {
-            rowsPerPage: 10,
-            startPage: 0,
-            dynamicRows: true,
-            rowsPerPageIncrement: 10,
-            goTo: true,
-            seletedIndex: 0
-        }
-        if (pagination != true) {
-            Component.test({pagination}, Component.isObj, { nullable: true, type: "PaginationConfig" })
-            this.#pagination = {...this.#pagination, ...pagination}
-        }
+        this.#pagination = pagination
+        
+        if (this.#pagination != null) {
+            this.#pagination = {
+                rowsPerPage: 10,
+                startPage: 1,
+                dynamicRows: true,
+                rowsPerPageIncrement: 10,
+                goTo: true,
+                seletedIndex: 0
+            }
 
-        this.#pagination.totalPages = Math.ceil(this.#data.length / this.#pagination.rowsPerPage)
-        this.#pagination.totalRows = Math.ceil(this.#data.length / 10) * 10
-        this.#pagination.currentPage = this.#pagination.startPage
-         
+            if (pagination != true) {
+                Component.test({pagination}, Component.isObj, { nullable: true, type: "PaginationConfig" })
+                this.#pagination = {...this.#pagination, ...pagination}
+            }
+
+            this.#pagination.totalPages = this.getTotalPages()
+            this.#pagination.totalRows = Math.ceil(this.#data.length / 10) * 10
+
+            if (isNaN(this.#pagination.startPage) && this.#pagination.startPage != "last") {
+                throw new Error("Pagination start page must be a number or 'last'")  
+            }
+            this.#pagination.currentPage = this.#pagination.startPage === "last" ? this.#pagination.totalPages : this.#pagination.startPage
+        }
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
@@ -185,6 +197,22 @@ class Grid extends Component {
         this.#renderBody()
 
         this.#linkEvents(renderType)
+    }
+
+    getPrevPage() {
+        if (this.#pagination === false) return undefined
+        if (this.#pagination.currentPage === 1) return null
+        return this.#pagination.currentPage - 1
+    }
+
+    getNextPage() {
+        if (this.#pagination === false) return undefined
+        if (this.#pagination.currentPage === this.#pagination.totalPages) return null
+        return this.#pagination.currentPage + 1
+    }
+
+    getTotalPages() {
+        return Math.ceil(this.#data.length / this.#pagination.rowsPerPage)
     }
 
     #getRowsPerPageComponent() {
@@ -284,8 +312,10 @@ class Grid extends Component {
 
         if (tempData.length === 0) return this.#body.innerHTML = "<div class='grid-no-data'>No data matched the search</div>"
         else {
-            const START_INDEX = this.#pagination.currentPage * this.#pagination.rowsPerPage
-            tempData = tempData.slice(START_INDEX, START_INDEX + this.#pagination.rowsPerPage)
+            if (this.#pagination) {
+                const START_INDEX = (this.#pagination.currentPage - 1) * this.#pagination.rowsPerPage
+                tempData = tempData.slice(START_INDEX, START_INDEX + this.#pagination.rowsPerPage)
+            }
         }
 
         tempData.forEach(rowData => {
@@ -325,10 +355,85 @@ class Grid extends Component {
         })
     }
 
+    #renderPaginationPageSelection() {
+        this.#paginationPageSeletion.innerHTML = ""
+
+        const createPaginationBtn = ({ content=null, page=null, isCurrent=false} = {}) => {
+            return Component.createElement({
+                element: "button",
+                classAttr: "grid-pagination-btn",
+                content: content ?? page,
+                dataset: {
+                    page
+                },
+                attrSet: {
+                    disabled: page === null || isCurrent
+                }
+            })
+        }
+
+        const paginationLoop = ({start, end, bool}) => {
+            for (let tempPage = start; tempPage <= end; tempPage++) {
+                if (tempPage < 1 || tempPage > this.#pagination.totalPages) continue
+                this.#paginationPageSeletion.appendChild(createPaginationBtn({
+                    page: tempPage,
+                    isCurrent: bool(tempPage)
+                }))
+            }
+        }
+
+        const ELLIPSE = createPaginationBtn({ content: "..." })
+        const FIRST_PAGE_BTN = createPaginationBtn({ page: 1 })
+        const LAST_PAGE_BTN = createPaginationBtn({ page: this.#pagination.totalPages })
+
+        
+        this.#paginationPageSeletion.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
+
+        if (this.#pagination.currentPage === 1) {
+            paginationLoop({
+                start: this.#pagination.currentPage,
+                end: this.#pagination.totalPages > 4 ? 4 : this.#pagination.totalPages - 1,
+                bool: (tempPage) => tempPage === this.#pagination.currentPage
+            })
+            
+            if (this.#pagination.totalPages > 4) this.#paginationPageSeletion.appendChild(ELLIPSE)
+            this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
+        }
+        else if (this.#pagination.currentPage === this.#pagination.totalPages) {
+            this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
+            this.#paginationPageSeletion.appendChild(ELLIPSE)
+
+            paginationLoop({
+                start: this.#pagination.totalPages - 3,
+                end: this.#pagination.totalPages,
+                bool: (tempPage) => tempPage === this.#pagination.totalPages
+            })
+        }
+        else {
+            if (this.#pagination.currentPage > 3) this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
+            if (this.#pagination.currentPage > 4) this.#paginationPageSeletion.appendChild(ELLIPSE.cloneNode(true))
+
+            paginationLoop({
+                start: this.#pagination.currentPage - 2,
+                end: this.#pagination.currentPage + 2,
+                bool: (tempPage) => tempPage === this.#pagination.currentPage
+            })
+
+            if (this.#pagination.currentPage < this.#pagination.totalPages - 2){
+                this.#paginationPageSeletion.appendChild(ELLIPSE.cloneNode(true))
+                this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
+            }
+        }
+
+        this.#paginationPageSeletion.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
+    }
+
     #renderFooter() {
         this.#footer.innerHTML = ""
         if (this.#pagination) {
             this.#footer.appendChild(this.#getRowsPerPageComponent())
+            this.#footer.appendChild(this.#paginationPageSeletion)
+            this.#renderPaginationPageSelection()
         }
         //this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
     }
@@ -349,11 +454,15 @@ class Grid extends Component {
         }
     }
 
-    #updateRowsPerPageSelects() {
+    #updatePaginationElements() {
         this.#rowSelects.forEach(select => {
             select.seletedIndex = this.#pagination.seletedIndex
             select.value = this.#pagination.rowsPerPage
         })
+
+        this.#pagination.currentPage = 1
+        this.#pagination.totalPages = this.getTotalPages()
+        this.#renderPaginationPageSelection()
     }
 
     #linkEvents(renderType) {
@@ -371,7 +480,7 @@ class Grid extends Component {
                         this.#pagination.rowsPerPage = select.value
                         this.#pagination.seletedIndex = select.seletedIndex
 
-                        this.#updateRowsPerPageSelects()
+                        this.#updatePaginationElements()
                         this.render(Component.RENDER_TYPES.partial)
                     })
                 })

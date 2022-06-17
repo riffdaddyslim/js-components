@@ -68,6 +68,21 @@
 .grid-footer {
   text-align: right;
   padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.grid-pagination {
+  display: flex;
+  gap: 0.5rem;
+}
+.grid-pagination-btn {
+  padding: 0.25rem 0.5rem;
+}
+.grid-pagination-btn[disabled] {
+  border: none;
+  background: none;
+  color: black;
 }
 .grid-select {
   padding: 0.5rem;

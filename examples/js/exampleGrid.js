@@ -80,10 +80,7 @@ const CONFIG = {
                 `
         },
         selectable: true,
-        pagination: {
-            rowsPerPage: 5,
-            rowsPerPageIncrement: 5
-        }
+        pagination: true
     }
 }
 
