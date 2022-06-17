@@ -125,7 +125,7 @@ class Grid extends Component {
         this.#selectable = selectable
         if (this.#selectable) {
             this.#columnData.push({
-                display: () => `<input type="checkbox" id="cb_checkAll" ${this.#checkAll ? "checked" : ""}>`,
+                display: () => `<input type="checkbox" id="cb_checkAll" ${this.#isCheckAllChecked() ? "checked" : ""}>`,
                 content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-${this.#uniqueIdentifier}="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
                 sortable: false
@@ -176,6 +176,8 @@ class Grid extends Component {
                 throw new Error("Pagination start page must be a number or 'last'")  
             }
             this.#pagination.currentPage = this.#pagination.startPage === "last" ? this.#pagination.totalPages : this.#pagination.startPage
+
+            this.#checkAll = {}
         }
     }
 
@@ -214,6 +216,11 @@ class Grid extends Component {
 
     getTotalPages(data=this.#data) {
         return Math.ceil(data.length / this.#pagination.rowsPerPage)
+    }
+
+    #isCheckAllChecked() {
+        if (this.#pagination) return this.#checkAll[this.#pagination.currentPage]
+        return this.#checkAll
     }
 
     #getRowsPerPageComponent() {
@@ -469,6 +476,8 @@ class Grid extends Component {
 
         this.#pagination.currentPage = 1
         this.#pagination.totalPages = this.getTotalPages()
+
+        this.#checkAll = []
     }
 
     #linkEvents(renderType) {
@@ -512,23 +521,23 @@ class Grid extends Component {
 
         if (this.#selectable) {
             this.#header.querySelector("#cb_checkAll").addEventListener("change", e => {
-                this.#checkAll = e.target.checked
+                if (this.#pagination) this.#checkAll[this.#pagination.currentPage] = e.target.checked
                 const CB_IDS = []
                 this.#body.querySelectorAll("[id^=cb_row]").forEach(cb => { 
-                    if (cb.checked === this.#checkAll) return
+                    if (cb.checked === this.#isCheckAllChecked()) return
 
-                    cb.checked = this.#checkAll
+                    cb.checked = this.#isCheckAllChecked()
                     CB_IDS.push(cb.dataset[this.#uniqueIdentifier])
 
                     this.#updateRow(cb.dataset[this.#uniqueIdentifier], {
-                        selected: this.#checkAll
+                        selected: this.#isCheckAllChecked()
                     })
                 })
 
 
                 const EVENT = new CustomEvent("selectAll", { detail: {
                     ids: CB_IDS,
-                    checked: this.#checkAll
+                    checked: this.#isCheckAllChecked()
                 }})
                 this.container.dispatchEvent(EVENT)
             })
