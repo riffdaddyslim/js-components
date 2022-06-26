@@ -8,7 +8,7 @@
 import Component from "./Component.js"
 
 /**
- * @memberof DataGrid
+ * @memberof Grid
  * @typedef {Object} ColumnItem Object used to define params for each grid column
  * @property {String} [key=null] Identifier for the column
  * @property {Function} [content=value for key] Function to create content given row data
@@ -16,6 +16,16 @@ import Component from "./Component.js"
  * @property {String} [width=1fr] Determines width of the column
  * @property {String} [id=null] Used internally to identify programatically added columns
  * @property {Boolean} [sortable=true] Used to determine if given column is sortable
+ */
+
+/**
+ * @memberof Grid
+ * @typedef {Object} PaginationConfig Config options for the pagination of the grid
+ * @property {Number} [rowsPerPage=10] Number of results per page
+ * @property {Number} [startPage=1] Page to start the results on load
+ * @property {Boolean} [dynamicRows=true] Allow user to change number of rows per page
+ * @property {Number} [rowsPerPageIncrement=10] Determines the increment that the rows per page can be changed by if dynamicRows is true
+ * @property {Boolean} [goto=true] Allow user to select the page they would like to go to without using the prev, next. If false user will only be able to just to the first, last, previous, or next pages 
  */
 
 class Grid extends Component {
@@ -48,6 +58,20 @@ class Grid extends Component {
         }
     })
 
+    #paginationPageSelection = Component.createElement({
+        classAttr: "grid-pagination"
+    })
+
+    #paginationGoToContainer = Component.createElement({
+        content: "Goto Page:",
+        classAttr: "grid-pagination-goto"
+    })
+
+    #paginationGoToSelect = Component.createElement({
+        element: "select",
+        id: "paginationGoToSelect"
+    })
+
     #columnData = null
     
     // Optional Params
@@ -57,10 +81,12 @@ class Grid extends Component {
     #selectable
     #search
     #uniqueIdentifier
+    #pagination
     
     // Program Vars
     #checkAll = false
     #searchValue = null
+    #rowSelects = null
 
     /**
      * JS Grid Component
@@ -70,8 +96,9 @@ class Grid extends Component {
      * @param {Function} [expand=null] Function used to display expand data
      * @param {Boolean} [numbered=false] Determines if the rows will be numbered
      * @param {Boolean} [sortable=true] Determines if the column headers can be used to sort the data
-     * @param {String} [selectable=null] Key for value that is used to identify selected row
+     * @param {Boolean} [selectable=false] Key for value that is used to identify selected row
      * @param {String} [uniqueIdentifier=id] Unique identifier for each row in the given data
+     * @param {PaginationConfig} [uniqueIdentifier=id] Unique identifier for each row in the given data
      */
     constructor(container, columnData, {
         data = null,
@@ -80,7 +107,8 @@ class Grid extends Component {
         sortable = true,
         selectable = false,
         search = true,
-        uniqueIdentifier = "id"
+        uniqueIdentifier = "id",
+        pagination = null
     } = {}) {
         super({ container })
 
@@ -107,7 +135,7 @@ class Grid extends Component {
         this.#selectable = selectable
         if (this.#selectable) {
             this.#columnData.push({
-                display: () => `<input type="checkbox" id="cb_checkAll" ${this.#checkAll ? "checked" : ""}>`,
+                display: () => `<input type="checkbox" id="cb_checkAll" ${this.#isCheckAllChecked() ? "checked" : ""}>`,
                 content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-${this.#uniqueIdentifier}="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
                 sortable: false
@@ -133,25 +161,110 @@ class Grid extends Component {
         Component.test({search}, Component.isBool, { type: "Boolean" })
         this.#search = search
 
+        this.#pagination = pagination
+        this.#paginationGoToContainer.appendChild(this.#paginationGoToSelect)
+        
+        if (this.#pagination != null) {
+            this.#pagination = {
+                minRowsPerPage: 10,
+                startPage: 1,
+                dynamicRows: true,
+                rowsPerPageIncrement: 10,
+                goto: true,
+                seletedIndex: 0
+            }
+            this.#pagination.rowsPerPage = this.#pagination.minRowsPerPage
+
+            if (pagination != true) {
+                Component.test({pagination}, Component.isObj, { nullable: true, type: "PaginationConfig" })
+                this.#pagination = {...this.#pagination, ...pagination}
+            }
+
+            this.#pagination.totalPages = this.getTotalPages()
+            this.#pagination.totalRows = Math.ceil(this.#data.length / 10) * 10
+
+            if (isNaN(this.#pagination.startPage) && this.#pagination.startPage != "last") {
+                throw new Error("Pagination start page must be a number or 'last'")  
+            }
+            this.#pagination.currentPage = this.#pagination.startPage === "last" ? this.#pagination.totalPages : this.#pagination.startPage
+
+            this.#checkAll = {}
+        }
     }
 
     render(renderType = Component.RENDER_TYPES.full) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
                 this.container.appendChild(this.#actionBar)
-
                 this.#renderActionBar()
             }
             this.container.appendChild(this.#header)
             this.container.appendChild(this.#body)
+
             this.container.appendChild(this.#footer)
+            this.#renderFooter()
+
+            this.#rowSelects = this.container.querySelectorAll(".row-count-select")
         }
 
         this.#renderHeader()
         this.#renderBody()
-        this.#renderFooter()
 
         this.#linkEvents(renderType)
+    }
+
+    getPrevPage() {
+        if (this.#pagination === false) return undefined
+        if (this.#pagination.currentPage === 1) return null
+        return this.#pagination.currentPage - 1
+    }
+
+    getNextPage() {
+        if (this.#pagination === false) return undefined
+        if (this.#pagination.currentPage === this.#pagination.totalPages) return null
+        return this.#pagination.currentPage + 1
+    }
+
+    getTotalPages(data=this.#data) {
+        return Math.ceil(data.length / this.#pagination.rowsPerPage)
+    }
+
+    #isCheckAllChecked() {
+        if (this.#pagination) return this.#checkAll[this.#pagination.currentPage]
+        return this.#checkAll
+    }
+
+    #getRowsPerPageComponent() {
+        const createOption = (value) => {
+            return Component.createElement({
+                element: "option",
+                content: value,
+                attrSet: {
+                    value
+                }
+            })
+        }
+        
+        const CONTAINER = Component.createElement({ classAttr: "grid-select-container" })
+        CONTAINER.appendChild(Component.createElement({ content: "Rows:" }))
+
+        const SELECT = Component.createElement({
+            element: "select",
+            classAttr: "grid-select row-count-select"
+        })
+        CONTAINER.appendChild(SELECT)
+
+        for (let value = this.#pagination.minRowsPerPage; value < this.#pagination.totalRows; value += this.#pagination.rowsPerPageIncrement) {
+            SELECT.appendChild(createOption(value))
+        }
+        SELECT.appendChild(createOption(this.#pagination.totalRows))
+
+        return CONTAINER
+    }
+
+    #renderActionBar() {
+        if (this.#pagination) this.#actionBar.appendChild(this.#getRowsPerPageComponent())
+        if (this.#search) this.#actionBar.appendChild(this.#searchBar)
     }
 
     #getHeaderDisplay(columnData) {
@@ -161,12 +274,6 @@ class Grid extends Component {
         }
         if (columnData.key) return columnData.key.toUpperCase()
         return ""
-    }
-
-    #renderActionBar() {
-        if (this.#search) {
-            this.#actionBar.appendChild(this.#searchBar)
-        }
     }
 
     #renderHeader() {
@@ -223,6 +330,15 @@ class Grid extends Component {
         }
 
         if (tempData.length === 0) return this.#body.innerHTML = "<div class='grid-no-data'>No data matched the search</div>"
+        else {
+            if (this.#pagination) {
+                this.#renderPaginationPageSelection(tempData)
+
+                const START_INDEX = (this.#pagination.currentPage - 1) * this.#pagination.rowsPerPage
+                tempData = tempData.slice(START_INDEX, START_INDEX + this.#pagination.rowsPerPage)
+            }
+        }
+
         tempData.forEach(rowData => {
             const ROW_DATASET = {}
             if (rowData.dataset) {
@@ -260,8 +376,105 @@ class Grid extends Component {
         })
     }
 
+    #renderPaginationPageSelection(data) {
+        this.#paginationPageSelection.innerHTML = ""
+
+        const createPaginationBtn = ({ content=null, page=null, isCurrent=false} = {}) => {
+            return Component.createElement({
+                element: "button",
+                classAttr: "grid-pagination-btn",
+                content: content ?? page,
+                dataset: {
+                    page
+                },
+                attrSet: {
+                    disabled: page === null || isCurrent
+                }
+            })
+        }
+
+        const paginationLoop = ({start, end, bool}) => {
+            for (let tempPage = start; tempPage <= end; tempPage++) {
+                if (tempPage < 1 || tempPage > this.#pagination.totalPages) continue
+                this.#paginationPageSelection.appendChild(createPaginationBtn({
+                    page: tempPage,
+                    isCurrent: bool(tempPage)
+                }))
+            }
+        }
+        const ELLIPSE = createPaginationBtn({ content: "..." })
+        const FIRST_PAGE_BTN = createPaginationBtn({ page: 1 })
+        this.#pagination.totalPages = this.getTotalPages(data)
+        const LAST_PAGE_BTN = createPaginationBtn({ page: this.#pagination.totalPages })
+
+        if (this.#pagination.goto) {
+            this.#paginationGoToSelect.innerHTML = ""
+            for (let page = 1; page <= this.#pagination.totalPages; page++) {
+                this.#paginationGoToSelect.appendChild(Component.createElement({
+                    element: "option",
+                    value: page,
+                    content: page
+                }))
+            }
+            
+            this.#paginationGoToSelect.value = this.#pagination.currentPage
+            this.#paginationPageSelection.appendChild(this.#paginationGoToContainer)
+        }
+        
+        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
+
+        if (this.#pagination.currentPage === 1) {
+            paginationLoop({
+                start: this.#pagination.currentPage,
+                end: this.#pagination.totalPages > 4 ? 4 : this.#pagination.totalPages - 1,
+                bool: (tempPage) => tempPage === this.#pagination.currentPage
+            })
+            
+            if (this.#pagination.totalPages > 4) this.#paginationPageSelection.appendChild(ELLIPSE)
+            if (this.#pagination.currentPage != this.#pagination.totalPages) this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
+            else this.#paginationPageSelection.appendChild(createPaginationBtn({
+                content: 1,
+                isCurrent: true
+            }))
+        }
+        else if (this.#pagination.currentPage === this.#pagination.totalPages) {
+            if (1 > 4 - this.#pagination.currentPage) {
+                this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
+                this.#paginationPageSelection.appendChild(ELLIPSE)
+            }
+
+            paginationLoop({
+                start: this.#pagination.totalPages - 3,
+                end: this.#pagination.totalPages,
+                bool: (tempPage) => tempPage === this.#pagination.totalPages
+            })
+        }
+        else {
+            if (this.#pagination.currentPage > 3) this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
+            if (this.#pagination.currentPage > 4) this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
+
+            paginationLoop({
+                start: this.#pagination.currentPage - 2,
+                end: this.#pagination.currentPage + 2,
+                bool: (tempPage) => tempPage === this.#pagination.currentPage
+            })
+
+            if (this.#pagination.currentPage < this.#pagination.totalPages - 2){
+                this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
+                this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
+            }
+        }
+
+        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
+    }
+
     #renderFooter() {
-        this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
+        this.#footer.innerHTML = ""
+        if (this.#pagination) {
+            this.#footer.appendChild(this.#getRowsPerPageComponent())
+            this.#footer.appendChild(this.#paginationPageSelection)
+        }
+        //this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
     }
 
     /**
@@ -280,12 +493,35 @@ class Grid extends Component {
         }
     }
 
+    #updatePaginationElements() {
+        this.#rowSelects.forEach(select => {
+            select.value = this.#pagination.rowsPerPage
+        })
+
+        this.#pagination.currentPage = 1
+        this.#pagination.totalPages = this.getTotalPages()
+
+        this.#checkAll = []
+    }
+
     #linkEvents(renderType) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
                 this.#searchBar.addEventListener("search", () => {
                     this.#searchValue = this.#searchBar.value.toLowerCase()
+                    if (this.#pagination) this.#pagination.currentPage = 1
                     this.render(Component.RENDER_TYPES.partial)
+                })
+            }
+
+            if (this.#pagination) {
+                this.#rowSelects.forEach(select => {
+                    select.addEventListener("change", () => {
+                        this.#pagination.rowsPerPage = parseInt(select.value)
+
+                        this.#updatePaginationElements()
+                        this.render(Component.RENDER_TYPES.partial)
+                    })
                 })
             }
         }
@@ -309,23 +545,23 @@ class Grid extends Component {
 
         if (this.#selectable) {
             this.#header.querySelector("#cb_checkAll").addEventListener("change", e => {
-                this.#checkAll = e.target.checked
+                if (this.#pagination) this.#checkAll[this.#pagination.currentPage] = e.target.checked
                 const CB_IDS = []
                 this.#body.querySelectorAll("[id^=cb_row]").forEach(cb => { 
-                    if (cb.checked === this.#checkAll) return
+                    if (cb.checked === this.#isCheckAllChecked()) return
 
-                    cb.checked = this.#checkAll
+                    cb.checked = this.#isCheckAllChecked()
                     CB_IDS.push(cb.dataset[this.#uniqueIdentifier])
 
                     this.#updateRow(cb.dataset[this.#uniqueIdentifier], {
-                        selected: this.#checkAll
+                        selected: this.#isCheckAllChecked()
                     })
                 })
 
 
                 const EVENT = new CustomEvent("selectAll", { detail: {
                     ids: CB_IDS,
-                    checked: this.#checkAll
+                    checked: this.#isCheckAllChecked()
                 }})
                 this.container.dispatchEvent(EVENT)
             })
@@ -343,6 +579,20 @@ class Grid extends Component {
                     this.container.dispatchEvent(EVENT)
                 })
             })
+
+            if (this.#pagination) {
+                this.#paginationPageSelection.querySelectorAll("button").forEach(button => {
+                    button.addEventListener("click", () => {
+                        this.#pagination.currentPage = parseInt(button.dataset.page)
+                        this.render(Component.RENDER_TYPES.partial)
+                    })
+                })
+
+                this.#paginationGoToSelect.addEventListener("change", e => {
+                    this.#pagination.currentPage = parseInt(e.target.value)
+                    this.render(Component.RENDER_TYPES.partial)
+                })
+            }
         }
     }
 
