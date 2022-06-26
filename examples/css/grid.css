@@ -84,6 +84,14 @@
   background: none;
   color: black;
 }
+.grid-pagination-goto {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.grid-pagination-goto > select {
+  padding: 0.25rem 0;
+}
 .grid-select {
   padding: 0.5rem;
 }

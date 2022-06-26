@@ -25,7 +25,7 @@ import Component from "./Component.js"
  * @property {Number} [startPage=1] Page to start the results on load
  * @property {Boolean} [dynamicRows=true] Allow user to change number of rows per page
  * @property {Number} [rowsPerPageIncrement=10] Determines the increment that the rows per page can be changed by if dynamicRows is true
- * @property {Boolean} [goTo=true] Allow user to select the page they would like to go to without using the prev, next. If false user will only be able to just to the first, last, previous, or next pages 
+ * @property {Boolean} [goto=true] Allow user to select the page they would like to go to without using the prev, next. If false user will only be able to just to the first, last, previous, or next pages 
  */
 
 class Grid extends Component {
@@ -58,8 +58,18 @@ class Grid extends Component {
         }
     })
 
-    #paginationPageSeletion = Component.createElement({
+    #paginationPageSelection = Component.createElement({
         classAttr: "grid-pagination"
+    })
+
+    #paginationGoToContainer = Component.createElement({
+        content: "Goto Page:",
+        classAttr: "grid-pagination-goto"
+    })
+
+    #paginationGoToSelect = Component.createElement({
+        element: "select",
+        id: "paginationGoToSelect"
     })
 
     #columnData = null
@@ -152,6 +162,7 @@ class Grid extends Component {
         this.#search = search
 
         this.#pagination = pagination
+        this.#paginationGoToContainer.appendChild(this.#paginationGoToSelect)
         
         if (this.#pagination != null) {
             this.#pagination = {
@@ -159,7 +170,7 @@ class Grid extends Component {
                 startPage: 1,
                 dynamicRows: true,
                 rowsPerPageIncrement: 10,
-                goTo: true,
+                goto: true,
                 seletedIndex: 0
             }
             this.#pagination.rowsPerPage = this.#pagination.minRowsPerPage
@@ -366,7 +377,7 @@ class Grid extends Component {
     }
 
     #renderPaginationPageSelection(data) {
-        this.#paginationPageSeletion.innerHTML = ""
+        this.#paginationPageSelection.innerHTML = ""
 
         const createPaginationBtn = ({ content=null, page=null, isCurrent=false} = {}) => {
             return Component.createElement({
@@ -385,7 +396,7 @@ class Grid extends Component {
         const paginationLoop = ({start, end, bool}) => {
             for (let tempPage = start; tempPage <= end; tempPage++) {
                 if (tempPage < 1 || tempPage > this.#pagination.totalPages) continue
-                this.#paginationPageSeletion.appendChild(createPaginationBtn({
+                this.#paginationPageSelection.appendChild(createPaginationBtn({
                     page: tempPage,
                     isCurrent: bool(tempPage)
                 }))
@@ -396,8 +407,21 @@ class Grid extends Component {
         this.#pagination.totalPages = this.getTotalPages(data)
         const LAST_PAGE_BTN = createPaginationBtn({ page: this.#pagination.totalPages })
 
+        if (this.#pagination.goto) {
+            this.#paginationGoToSelect.innerHTML = ""
+            for (let page = 1; page <= this.#pagination.totalPages; page++) {
+                this.#paginationGoToSelect.appendChild(Component.createElement({
+                    element: "option",
+                    value: page,
+                    content: page
+                }))
+            }
+            
+            this.#paginationGoToSelect.value = this.#pagination.currentPage
+            this.#paginationPageSelection.appendChild(this.#paginationGoToContainer)
+        }
         
-        this.#paginationPageSeletion.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
+        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
 
         if (this.#pagination.currentPage === 1) {
             paginationLoop({
@@ -406,17 +430,17 @@ class Grid extends Component {
                 bool: (tempPage) => tempPage === this.#pagination.currentPage
             })
             
-            if (this.#pagination.totalPages > 4) this.#paginationPageSeletion.appendChild(ELLIPSE)
-            if (this.#pagination.currentPage != this.#pagination.totalPages) this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
-            else this.#paginationPageSeletion.appendChild(createPaginationBtn({
+            if (this.#pagination.totalPages > 4) this.#paginationPageSelection.appendChild(ELLIPSE)
+            if (this.#pagination.currentPage != this.#pagination.totalPages) this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
+            else this.#paginationPageSelection.appendChild(createPaginationBtn({
                 content: 1,
                 isCurrent: true
             }))
         }
         else if (this.#pagination.currentPage === this.#pagination.totalPages) {
             if (1 > 4 - this.#pagination.currentPage) {
-                this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
-                this.#paginationPageSeletion.appendChild(ELLIPSE)
+                this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
+                this.#paginationPageSelection.appendChild(ELLIPSE)
             }
 
             paginationLoop({
@@ -426,8 +450,8 @@ class Grid extends Component {
             })
         }
         else {
-            if (this.#pagination.currentPage > 3) this.#paginationPageSeletion.appendChild(FIRST_PAGE_BTN)
-            if (this.#pagination.currentPage > 4) this.#paginationPageSeletion.appendChild(ELLIPSE.cloneNode(true))
+            if (this.#pagination.currentPage > 3) this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
+            if (this.#pagination.currentPage > 4) this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
 
             paginationLoop({
                 start: this.#pagination.currentPage - 2,
@@ -436,19 +460,19 @@ class Grid extends Component {
             })
 
             if (this.#pagination.currentPage < this.#pagination.totalPages - 2){
-                this.#paginationPageSeletion.appendChild(ELLIPSE.cloneNode(true))
-                this.#paginationPageSeletion.appendChild(LAST_PAGE_BTN)
+                this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
+                this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
             }
         }
 
-        this.#paginationPageSeletion.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
+        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
     }
 
     #renderFooter() {
         this.#footer.innerHTML = ""
         if (this.#pagination) {
             this.#footer.appendChild(this.#getRowsPerPageComponent())
-            this.#footer.appendChild(this.#paginationPageSeletion)
+            this.#footer.appendChild(this.#paginationPageSelection)
         }
         //this.#footer.innerText = `Last Updated: ${new Date().toLocaleString()}`
     }
@@ -557,11 +581,16 @@ class Grid extends Component {
             })
 
             if (this.#pagination) {
-                this.#paginationPageSeletion.querySelectorAll("button").forEach(button => {
+                this.#paginationPageSelection.querySelectorAll("button").forEach(button => {
                     button.addEventListener("click", () => {
                         this.#pagination.currentPage = parseInt(button.dataset.page)
                         this.render(Component.RENDER_TYPES.partial)
                     })
+                })
+
+                this.#paginationGoToSelect.addEventListener("change", e => {
+                    this.#pagination.currentPage = parseInt(e.target.value)
+                    this.render(Component.RENDER_TYPES.partial)
                 })
             }
         }
