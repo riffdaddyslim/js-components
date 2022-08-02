@@ -87,6 +87,7 @@ class Grid extends Component {
     #checkAll = false
     #searchValue = null
     #rowSelects = null
+    #layout = null
 
     /**
      * JS Grid Component
@@ -99,6 +100,7 @@ class Grid extends Component {
      * @param {Boolean} [selectable=false] Key for value that is used to identify selected row
      * @param {String} [uniqueIdentifier=id] Unique identifier for each row in the given data
      * @param {PaginationConfig} [uniqueIdentifier=id] Unique identifier for each row in the given data
+     * @param {Number} [breakpoint=1500] Width for breakpoint between card and row layouts
      */
     constructor(container, columnData, {
         data = null,
@@ -108,7 +110,8 @@ class Grid extends Component {
         selectable = false,
         search = true,
         uniqueIdentifier = "id",
-        pagination = null
+        pagination = null,
+        breakpoint = 1500
     } = {}) {
         super({ container })
 
@@ -127,7 +130,8 @@ class Grid extends Component {
                 display: "#",
                 content: ({ index }) => index + 1,
                 width: "50px",
-                sortable: false
+                sortable: false,
+                columnId: "number"
             })
         }
 
@@ -138,7 +142,8 @@ class Grid extends Component {
                 display: () => `<input type="checkbox" id="cb_checkAll" ${this.#isCheckAllChecked() ? "checked" : ""}>`,
                 content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-${this.#uniqueIdentifier}="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
-                sortable: false
+                sortable: false,
+                columnId: "select"
             })
         }
 
@@ -189,6 +194,24 @@ class Grid extends Component {
             this.#pagination.currentPage = this.#pagination.startPage === "last" ? this.#pagination.totalPages : this.#pagination.startPage
 
             this.#checkAll = {}
+        }
+
+        // Component.test({ breakpoint }, Component.isString)
+        window.addEventListener("resize", e => { this.#setLayout(breakpoint) })
+        this.#setLayout(breakpoint)
+    }
+
+    #setLayout(breakpoint) {
+        let newLayout = "grid"
+        if (window.innerWidth < breakpoint) {
+            this.container.classList.add("card")
+            newLayout = "card"
+        }
+        else this.container.classList.remove("card")
+
+        if (newLayout != this.#layout) {
+            this.#layout = newLayout
+            this.render()
         }
     }
 
@@ -259,10 +282,13 @@ class Grid extends Component {
         }
         SELECT.appendChild(createOption(this.#pagination.totalRows))
 
+        SELECT.value = this.#pagination.rowsPerPage
+
         return CONTAINER
     }
 
     #renderActionBar() {
+        this.#actionBar.innerHTML = ""
         if (this.#pagination) this.#actionBar.appendChild(this.#getRowsPerPageComponent())
         if (this.#search) this.#actionBar.appendChild(this.#searchBar)
     }
@@ -278,10 +304,11 @@ class Grid extends Component {
 
     #renderHeader() {
         this.#header.innerHTML = ""
-        let layout = `--layout:`
+        if (this.#layout == "card" && !this.#sortable) return
+        let layout = ``
 
         for (let columnData of this.#columnData) {
-            layout += ` ${columnData.width ?? "1fr"}`
+            layout += this.#layout != "card" ? ` ${columnData.width ?? "1fr"}` : " auto"
 
             const DATASET = {}
             if (this.#sortable && columnData.sortable != false && columnData.key) DATASET.key = columnData.key
@@ -297,7 +324,7 @@ class Grid extends Component {
         }
 
         // Sets layout css var for grid layout
-        this.container.setAttribute("style", layout)
+        this.container.style.setProperty("--layout", layout)
     }
 
     #getCellContent(columnData, rowData) {
@@ -308,6 +335,16 @@ class Grid extends Component {
         if (columnData.content) return columnData.content({ columnData, rowData, index: INDEX })
         if (rowData[columnData.key] === "" || rowData[columnData.key] === null || rowData[columnData.key] === undefined) return "&mdash;"
         return String(rowData[columnData.key])
+    }
+
+    #getCellLabel(columnData) {
+        if (this.#layout != "card") return ""
+        const SPECIAL_COLUMNS = ["select", "number"]
+        if (SPECIAL_COLUMNS.includes(columnData.columnId)) return ""
+
+        const HEADER_DISPLAY = this.#getHeaderDisplay(columnData)
+        if (HEADER_DISPLAY === "") return HEADER_DISPLAY
+        return `${HEADER_DISPLAY}: `
     }
 
     #renderBody() {
@@ -357,7 +394,7 @@ class Grid extends Component {
             for (let columnData of this.#columnData) {
                 row.appendChild(Component.createElement({
                     classAttr: "grid-cell",
-                    content: this.#getCellContent(columnData, rowData)
+                    content: `${this.#getCellLabel(columnData)}${this.#getCellContent(columnData, rowData)}`
                 }))
             }
 

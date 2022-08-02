@@ -2,7 +2,6 @@ import {buildCalendar} from "./exampleCalendar.js";
 import { buildGrid, buildGridOLD } from "./exampleGrid.js";
 
 const GRID = buildGrid(document.getElementById("grid"))
-GRID.render()
 
 document.getElementById("grid").addEventListener("selectAll", e => {
     console.log(e.detail)

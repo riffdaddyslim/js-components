@@ -3,7 +3,7 @@ import DataGrid from "../components/Grid_OLD.js"
 import { GRID_DATA } from "./data.js"
 import { VEG_DATA } from "./vegetableInfo.js"
 
-const KEY = "veg"
+const KEY = "people"
 
 const COLUMNS = {
     people: [
@@ -67,7 +67,9 @@ const COLUMNS = {
 const CONFIG = {
     people: {
         data: GRID_DATA,
-        numbered: true
+        numbered: true,
+        search: true,
+        sortable: false
     },
     veg: {
         data: VEG_DATA,
@@ -79,7 +81,8 @@ const CONFIG = {
                 <p>${rowData.ReadyWeek}</p>
                 `
         },
-        selectable: true
+        selectable: true,
+        pagination: true
     }
 }
 

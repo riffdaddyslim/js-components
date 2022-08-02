@@ -1,12 +1,17 @@
 @charset "UTF-8";
+.card .grid-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.card .grid-body {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .grid-action-bar {
   width: 100%;
   display: flex;
   justify-content: space-between;
-}
-.grid-search-bar {
-  padding: 0.5rem;
-  width: 450px;
 }
 .grid-header, .grid-row {
   display: grid;
@@ -76,9 +81,6 @@
   display: flex;
   gap: 0.5rem;
 }
-.grid-pagination-btn {
-  padding: 0.25rem 0.5rem;
-}
 .grid-pagination-btn[disabled] {
   border: none;
   background: none;
@@ -88,12 +90,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-.grid-pagination-goto > select {
-  padding: 0.25rem 0;
-}
-.grid-select {
-  padding: 0.5rem;
 }
 .grid-select-container {
   display: flex;
