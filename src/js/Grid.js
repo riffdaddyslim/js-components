@@ -201,6 +201,10 @@ class Grid extends Component {
         this.#setLayout(breakpoint)
     }
 
+    /**
+     * Sets the layout based on the current screen width
+     * @param {Number} breakpoint 
+     */
     #setLayout(breakpoint) {
         let newLayout = "grid"
         if (window.innerWidth < breakpoint) {
@@ -215,6 +219,10 @@ class Grid extends Component {
         }
     }
 
+    /**
+     * Renders the grid
+     * @param {Component.RENDER_TYPES} renderType 
+     */
     render(renderType = Component.RENDER_TYPES.full) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
@@ -236,27 +244,47 @@ class Grid extends Component {
         this.#linkEvents(renderType)
     }
 
+    /**
+     * Gets the previous page number for pagination
+     * @returns {Number} previous page number
+     */
     getPrevPage() {
         if (this.#pagination === false) return undefined
         if (this.#pagination.currentPage === 1) return null
         return this.#pagination.currentPage - 1
     }
 
+    /**
+     * Gets the next page number for pagination
+     * @returns {Number} next page number
+     */
     getNextPage() {
         if (this.#pagination === false) return undefined
         if (this.#pagination.currentPage === this.#pagination.totalPages) return null
         return this.#pagination.currentPage + 1
     }
 
+    /**
+     * Gets the total pages for pagination
+     * @returns {Number} total pages 
+     */
     getTotalPages(data=this.#data) {
         return Math.ceil(data.length / this.#pagination.rowsPerPage)
     }
 
+    /**
+     * Determines if the check all checkbox is checked for the given page
+     * @returns {Boolean} isChecked
+     */
     #isCheckAllChecked() {
         if (this.#pagination) return this.#checkAll[this.#pagination.currentPage]
         return this.#checkAll
     }
 
+    /**
+     * Creates the select for the number of rows per page
+     * @returns {HTMLSelectElement} Rows per page select
+     */
     #getRowsPerPageComponent() {
         const createOption = (value) => {
             return Component.createElement({
@@ -287,12 +315,20 @@ class Grid extends Component {
         return CONTAINER
     }
 
+    /**
+     * Renders the action bar and its contents
+     */
     #renderActionBar() {
         this.#actionBar.innerHTML = ""
         if (this.#pagination) this.#actionBar.appendChild(this.#getRowsPerPageComponent())
         if (this.#search) this.#actionBar.appendChild(this.#searchBar)
     }
 
+    /**
+     * Gets the display for the given column
+     * @param {ColumnItem} columnData 
+     * @returns {String} Display for given column
+     */
     #getHeaderDisplay(columnData) {
         if (columnData.display) {
             if (typeof(columnData.display) === "function") return columnData.display()
@@ -302,6 +338,9 @@ class Grid extends Component {
         return ""
     }
 
+    /**
+     * Renders the header and its contents
+     */
     #renderHeader() {
         this.#header.innerHTML = ""
         if (this.#layout == "card" && !this.#sortable) return
@@ -327,6 +366,12 @@ class Grid extends Component {
         this.container.style.setProperty("--layout", layout)
     }
 
+    /**
+     * Gets the cell content for the given column
+     * @param {ColumnItem} columnData Column to search the rowData
+     * @param {Object[]} rowData Data to get the cell information from
+     * @returns {String} Content for cell
+     */
     #getCellContent(columnData, rowData) {
         const INDEX = this.#data.findIndex(item => item[this.#uniqueIdentifier] === rowData[this.#uniqueIdentifier])
         
@@ -337,16 +382,24 @@ class Grid extends Component {
         return String(rowData[columnData.key])
     }
 
+    /**
+     * Gets cell label for given column
+     * @param {ColumnItem} columnData 
+     * @returns {String} Label content
+     */
     #getCellLabel(columnData) {
         if (this.#layout != "card") return ""
         const SPECIAL_COLUMNS = ["select", "number"]
         if (SPECIAL_COLUMNS.includes(columnData.columnId)) return ""
 
         const HEADER_DISPLAY = this.#getHeaderDisplay(columnData)
-        if (HEADER_DISPLAY === "") return HEADER_DISPLAY
+        if (HEADER_DISPLAY === "") return ""
         return `${HEADER_DISPLAY}: `
     }
 
+    /**
+     * Renders the grid body and its contents
+     */
     #renderBody() {
         this.#body.innerHTML = ""
         if (!this.#data) return this.#body.innerHTML = "<div class='grid-no-data'>There is no data to display</div>"
@@ -413,6 +466,10 @@ class Grid extends Component {
         })
     }
 
+    /**
+     * Renders the pagination selection items
+     * @param {Object[]} data Grid data
+     */
     #renderPaginationPageSelection(data) {
         this.#paginationPageSelection.innerHTML = ""
 
@@ -505,6 +562,9 @@ class Grid extends Component {
         this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
     }
 
+    /**
+     * Renders the footer and its contents
+     */
     #renderFooter() {
         this.#footer.innerHTML = ""
         if (this.#pagination) {
@@ -530,6 +590,9 @@ class Grid extends Component {
         }
     }
 
+    /**
+     * Updated the pagination elements when the rows per page changes
+     */
     #updatePaginationElements() {
         this.#rowSelects.forEach(select => {
             select.value = this.#pagination.rowsPerPage
@@ -541,6 +604,10 @@ class Grid extends Component {
         this.#checkAll = []
     }
 
+    /**
+     * Links events to the various grid elements
+     * @param {Component.RENDER_TYPES} renderType 
+     */
     #linkEvents(renderType) {
         if (renderType === Component.RENDER_TYPES.full) {
             if (this.#search) {
