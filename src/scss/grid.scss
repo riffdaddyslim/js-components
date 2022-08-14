@@ -18,9 +18,10 @@
     }
 
     &-header,
-    &-row {
+    &-row:not(details),
+    &-row > summary {
         display: grid;
-        grid-template-columns: var(--layout);
+        grid-template-columns: var(--column-layout);
         align-items: center;
     }
 

@@ -439,7 +439,7 @@ class Grid extends Component {
 
             let row = Component.createElement({
                 element: this.#expand ? "summary" : "div",
-                classAttr: "grid-row",
+                classAttr: !this.#expand ? "grid-row" : null,
                 id: `row${rowData[this.#uniqueIdentifier]}`,
                 dataset: ROW_DATASET
             })
@@ -453,7 +453,8 @@ class Grid extends Component {
 
             if (this.#expand && this.#expand(rowData)) {
                 const DETAILS = Component.createElement({
-                    element: "details"
+                    element: "details",
+                    classAttr: "grid-row"
                 })
                 DETAILS.appendChild(row)
                 DETAILS.appendChild(Component.createElement({
