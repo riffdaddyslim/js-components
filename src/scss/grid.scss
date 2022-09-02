@@ -1,16 +1,21 @@
-.card .grid {
+.card.grid .grid {
     &-row {
-        display: flex;
-        flex-wrap: wrap;
+        border: thin black solid;
     }
 
-    &-body {
+    &-body,
+    &-header,
+    &-row:not(details),
+    &-row > summary {
         display: flex;
         flex-wrap: wrap;
+        gap: 1rem;
     }
 }
 
 .grid {
+    display: grid;
+
     &-action-bar {
         width: 100%;
         display: flex;
@@ -94,17 +99,25 @@
 
     &-footer {
         text-align: right;
-        padding: 1rem;
+        padding: 1rem 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
     &-pagination {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
 
         &-btn {
+            &-container {
+                display: flex;
+                gap: 0.5rem;
+            }
+
             &[disabled] {
                 border: none;
                 background: none;
