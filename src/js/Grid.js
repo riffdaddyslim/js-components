@@ -16,6 +16,7 @@ import Component from "./Component.js"
  * @property {String} [width=1fr] Determines width of the column
  * @property {String} [id=null] Used internally to identify programatically added columns
  * @property {Boolean} [sortable=true] Used to determine if given column is sortable
+ * @property {Boolean} [showCard=true] Used to determine if column is shown when in card layout
  */
 
 /**
@@ -114,6 +115,7 @@ class Grid extends Component {
         breakpoint = 1500
     } = {}) {
         super({ container })
+        this.container.classList.add("grid")
 
         Component.test({columnData}, Component.isArr, { type: "Array" })
         this.#columnData = columnData
@@ -143,7 +145,8 @@ class Grid extends Component {
                 content: ({rowData}) => `<input type="checkbox" id="cb_row${rowData[this.#uniqueIdentifier]}" data-${this.#uniqueIdentifier}="${rowData[this.#uniqueIdentifier]}" ${rowData.dataset?.selected ? "checked" : ""}>`,
                 width: "50px",
                 sortable: false,
-                columnId: "select"
+                columnId: "select",
+                showCard: false
             })
         }
 
@@ -363,7 +366,7 @@ class Grid extends Component {
         }
 
         // Sets layout css var for grid layout
-        this.container.style.setProperty("--layout", layout)
+        this.container.style.setProperty("--column-layout", layout)
     }
 
     /**
@@ -445,10 +448,16 @@ class Grid extends Component {
             })
 
             for (let columnData of this.#columnData) {
+                if (this.#layout === "card" && columnData.showCard === false) continue
                 row.appendChild(Component.createElement({
                     classAttr: "grid-cell",
-                    content: `${this.#getCellLabel(columnData)}${this.#getCellContent(columnData, rowData)}`
+                    content: `<b>${this.#getCellLabel(columnData)}</b>${this.#getCellContent(columnData, rowData)}`
                 }))
+            }
+
+            if (this.#selectable && this.#layout === "card") {
+                // TODO: Add handling for when in card layout and selectable.
+                // Not sure how to handle when both selectable and expandable
             }
 
             if (this.#expand && this.#expand(rowData)) {
@@ -488,10 +497,11 @@ class Grid extends Component {
             })
         }
 
+        const PAGINATION_BTN_CONTAINER = Component.createElement({ classAttr: "grid-pagination-btn-container" })
         const paginationLoop = ({start, end, bool}) => {
             for (let tempPage = start; tempPage <= end; tempPage++) {
                 if (tempPage < 1 || tempPage > this.#pagination.totalPages) continue
-                this.#paginationPageSelection.appendChild(createPaginationBtn({
+                PAGINATION_BTN_CONTAINER.appendChild(createPaginationBtn({
                     page: tempPage,
                     isCurrent: bool(tempPage)
                 }))
@@ -516,7 +526,7 @@ class Grid extends Component {
             this.#paginationPageSelection.appendChild(this.#paginationGoToContainer)
         }
         
-        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
+        PAGINATION_BTN_CONTAINER.appendChild(createPaginationBtn({ content: "<- Prev", page: this.getPrevPage() }))
 
         if (this.#pagination.currentPage === 1) {
             paginationLoop({
@@ -525,17 +535,17 @@ class Grid extends Component {
                 bool: (tempPage) => tempPage === this.#pagination.currentPage
             })
             
-            if (this.#pagination.totalPages > 4) this.#paginationPageSelection.appendChild(ELLIPSE)
-            if (this.#pagination.currentPage != this.#pagination.totalPages) this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
-            else this.#paginationPageSelection.appendChild(createPaginationBtn({
+            if (this.#pagination.totalPages > 4) PAGINATION_BTN_CONTAINER.appendChild(ELLIPSE)
+            if (this.#pagination.currentPage != this.#pagination.totalPages) PAGINATION_BTN_CONTAINER.appendChild(LAST_PAGE_BTN)
+            else PAGINATION_BTN_CONTAINER.appendChild(createPaginationBtn({
                 content: 1,
                 isCurrent: true
             }))
         }
         else if (this.#pagination.currentPage === this.#pagination.totalPages) {
             if (1 > 4 - this.#pagination.currentPage) {
-                this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
-                this.#paginationPageSelection.appendChild(ELLIPSE)
+                PAGINATION_BTN_CONTAINER.appendChild(FIRST_PAGE_BTN)
+                PAGINATION_BTN_CONTAINER.appendChild(ELLIPSE)
             }
 
             paginationLoop({
@@ -545,8 +555,8 @@ class Grid extends Component {
             })
         }
         else {
-            if (this.#pagination.currentPage > 3) this.#paginationPageSelection.appendChild(FIRST_PAGE_BTN)
-            if (this.#pagination.currentPage > 4) this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
+            if (this.#pagination.currentPage > 3) PAGINATION_BTN_CONTAINER.appendChild(FIRST_PAGE_BTN)
+            if (this.#pagination.currentPage > 4) PAGINATION_BTN_CONTAINER.appendChild(ELLIPSE.cloneNode(true))
 
             paginationLoop({
                 start: this.#pagination.currentPage - 2,
@@ -555,12 +565,13 @@ class Grid extends Component {
             })
 
             if (this.#pagination.currentPage < this.#pagination.totalPages - 2){
-                this.#paginationPageSelection.appendChild(ELLIPSE.cloneNode(true))
-                this.#paginationPageSelection.appendChild(LAST_PAGE_BTN)
+                PAGINATION_BTN_CONTAINER.appendChild(ELLIPSE.cloneNode(true))
+                PAGINATION_BTN_CONTAINER.appendChild(LAST_PAGE_BTN)
             }
         }
 
-        this.#paginationPageSelection.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
+        PAGINATION_BTN_CONTAINER.appendChild(createPaginationBtn({ content: "Next ->", page: this.getNextPage() }))
+        this.#paginationPageSelection.appendChild(PAGINATION_BTN_CONTAINER)
     }
 
     /**
