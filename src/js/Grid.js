@@ -662,6 +662,8 @@ class Grid extends Component {
         if (this.#selectable) {
             this.#header.querySelector("#cb_checkAll").addEventListener("change", e => {
                 if (this.#pagination) this.#checkAll[this.#pagination.currentPage] = e.target.checked
+                else this.#checkAll = e.target.checked
+                
                 const CB_IDS = []
                 this.#body.querySelectorAll("[id^=cb_row]").forEach(cb => { 
                     if (cb.checked === this.#isCheckAllChecked()) return
@@ -696,19 +698,20 @@ class Grid extends Component {
                 })
             })
 
-            if (this.#pagination) {
-                this.#paginationPageSelection.querySelectorAll("button").forEach(button => {
-                    button.addEventListener("click", () => {
-                        this.#pagination.currentPage = parseInt(button.dataset.page)
-                        this.render(Component.RENDER_TYPES.partial)
-                    })
-                })
+        }
 
-                this.#paginationGoToSelect.addEventListener("change", e => {
-                    this.#pagination.currentPage = parseInt(e.target.value)
+        if (this.#pagination) {
+            this.#paginationPageSelection.querySelectorAll("button").forEach(button => {
+                button.addEventListener("click", () => {
+                    this.#pagination.currentPage = parseInt(button.dataset.page)
                     this.render(Component.RENDER_TYPES.partial)
                 })
-            }
+            })
+
+            this.#paginationGoToSelect.addEventListener("change", e => {
+                this.#pagination.currentPage = parseInt(e.target.value)
+                this.render(Component.RENDER_TYPES.partial)
+            })
         }
     }
 
