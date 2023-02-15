@@ -98,15 +98,15 @@ export const EVENTS = [
         name: "Test Event 2",
         month: 2,
         day: 13,
-        year: 2022,
+        year: 2023,
         bgColor: "#9eebcf",
         color: "#137752"
     },
     {
         name: "All Day",
         month: 2,
-        day: 13,
-        year: 2022,
+        day: 3,
+        year: 2023,
         allDay: true,
         bgColor: "#9eebcf",
         color: "#137752"
@@ -118,14 +118,5 @@ export const EVENTS = [
         bgColor: "#ffdfdf",
         color: "#e7040f",
         recurring: true
-    },
-    // {
-    //     name: "multi day",
-    //     month: 2,
-    //     day: 25,
-    //     year: 2022,
-    //     endDay: 2,
-    //     endMonth: 3,
-    //     endYear: 2022
-    // }
+    }
 ]

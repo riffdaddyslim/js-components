@@ -1,37 +1,44 @@
 import {buildCalendar} from "./exampleCalendar.js";
-import { buildGrid, buildGridOLD } from "./exampleGrid.js";
+// import { buildGrid, buildGridOLD } from "./exampleGrid.js";
 
-const GRID = buildGrid(document.getElementById("grid"))
+// const GRID = buildGrid(document.getElementById("grid"))
 
-document.getElementById("grid").addEventListener("selectAll", e => {
-    console.log(e.detail)
-})
+// document.getElementById("grid").addEventListener("selectAll", e => {
+//     console.log(e.detail)
+// })
 
-document.getElementById("grid").addEventListener("rowSelected", e => {
-    console.log(e.detail)
-})
+// document.getElementById("grid").addEventListener("rowSelected", e => {
+//     console.log(e.detail)
+// })
 
 // const GRID_OLD = buildGridOLD(document.getElementById("grid2"))
 // GRID_OLD.render()
 
-// document.getElementById("calendar").addEventListener("renderComplete", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("renderComplete", e => {
+    console.log(e)
+})
 
-// const CALENDAR = buildCalendar(document.getElementById("calendar"))
-// CALENDAR.render()
+buildCalendar(document.getElementById("calendar")).render()
 
-// document.getElementById("calendar").addEventListener("change", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("change", e => {
+    console.log(e)
+})
 
-// document.getElementById("calendar").addEventListener("confirm", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("confirm", e => {
+    console.log(e)
+})
 
-// document.getElementById("calendar").addEventListener("eventClick", e => {
-//     console.log(e)
-// })
+document.getElementById("calendar").addEventListener("clear", e => {
+    console.log(e)
+})
+
+document.getElementById("calendar").addEventListener("eventClick", e => {
+    console.log(e)
+})
+
+document.getElementById("calendar").addEventListener("newEvent", e => {
+    console.log(e)
+})
 
 
 

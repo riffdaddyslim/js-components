@@ -26,7 +26,7 @@ import Component from "./Component.js"
  * @property {Number} [day] Day of the month the event starts
  * @property {Number} [year] Year the event starts
  * @property {Time} [startTime] Time the events starts
- * @property {Time} [endTime] Time the events starts
+ * @property {Time} [endTime] Time the events ends
  * @property {Boolean} [recurring] Determines is the event should reaccure
  * @property {Boolean} [allDay] Determines if the event is an all day event
  */
@@ -133,8 +133,7 @@ class Calendar extends Component {
     #pickerBtn
     #display = true
     #dayCallback
-    #clickedEvent
-
+    
     /**
      * @param {Number} [month=new Date().getMonth()] Month the calender start on
      * @param {Number} [day=new Date().getDate()] Month the calender start on
@@ -219,7 +218,16 @@ class Calendar extends Component {
          * @description Fired when calendar has completed its render process
          * @memberof Calendar
          */
-        this.calendarCompleteEvent = new Event("renderComplete")
+        this.calendarCompleteEvent = this.#calendarRenderEvent()
+    }
+
+    #calendarRenderEvent() {
+        return new CustomEvent("renderComplete", {
+            detail: {
+                month: this.month,
+                year: this.year
+            }
+        })
     }
 
     #getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
@@ -274,11 +282,6 @@ class Calendar extends Component {
     }
 
     #getEventContent({ month, day, year }) {
-        // ! REMOVED used in multiday events
-        // const eventBewteen = (event) => {
-        //     return this.#isDateBetween(new Date(event.year, event.month, event.day), new Date(event.endYear, event.endMonth, event.endDay), new Date(year, month, day))
-        // }
-
         const EVENTS = this.events.sort((a, b) => {
             if (a.allDay === b.allDay) return a.startTime > b.startTime ? 1 : -1
             return a.allDay == true && !b.allDay ? -1 : 1
@@ -286,9 +289,6 @@ class Calendar extends Component {
             if (event.month === month && event.year === year && event.day === day) return true
             if (event.recurring && day === event.day) return true
             if (event.recurring && event.week == this.#getWeekdayOccurance({ month, year, day }) && event.weekday == new Date(year, month, day).getDay()) return true
-            // ! REMOVED used in multiday event
-            // if (eventBewteen(event)) return true
-            // if (event.endDay === day && event.endMonth === month && event.endYear === year) return true
             return false
         })
 
@@ -298,19 +298,6 @@ class Calendar extends Component {
         for (let event of EVENTS) {
             const STYLE = `style="--event-bg: ${event.bgColor ?? "#96ccff"}; --event-color: ${event.color ?? "#001b44"}"`
             const ALL_DAY = event.allDay ? "data-all-day='true'" : ""
-            // ! REMOVED used in multiday event
-            /*const MULTI_DAY =  event.endDay && event.endDay != event.day && event.day === day ? `data-multi-day='true'` : ""
-
-            if (eventBewteen(event)
-                && (
-                    !this.#datesEqual(new Date(event.year, event.month, event.day), new Date(year, month, day))
-                    && !this.#datesEqual(new Date(event.endYear, event.endMonth, event.endDay), new Date(year, month, day)
-                   )
-                )
-                ) {
-                    if (new Date(year, month, day).getDay() != 0) content = ""
-                    ALL_DAY = "data-all-day='true'"
-                }*/
             if (event.endDay === day) content += " - End"
             eventContent += `<div id="${this.events.indexOf(event)}" class="calendar-event" ${STYLE} ${ALL_DAY}>${event.name}</div>`
         }
@@ -379,7 +366,7 @@ class Calendar extends Component {
         this.container.appendChild(this.calendar)
         this.#linkEvents(renderType)
 
-        this.container.dispatchEvent(this.calendarCompleteEvent)
+        this.container.dispatchEvent(this.#calendarRenderEvent())
     }
     
     /**
@@ -405,13 +392,13 @@ class Calendar extends Component {
         
         const BTN_CONTAINER = Component.createElement({ classAttr: "calendar-header-btn-container"})
 
-        this.addEventBtn = Component.createElement({ element: "button", classAttr: "component-btn calendar-btn", content: "Add Event" })
+        if (!this.readOnly && this.type != Calendar.TYPE.picker) this.addEventBtn = Component.createElement({ element: "button", classAttr: "component-btn calendar-btn", content: "Add Event" })
 
         this.prevBtn = Component.createElement({ element: "button", classAttr: "component-btn calendar-btn", content: "🡸" })
         this.todayBtn = Component.createElement({ element: "button", classAttr: "component-btn calendar-btn", content: "Today" })
         this.nextBtn = Component.createElement({ element: "button", classAttr: "component-btn calendar-btn", content: "🡺" })
 
-        if (!this.readOnly) BTN_CONTAINER.appendChild(this.addEventBtn)
+        if (this.addEventBtn) BTN_CONTAINER.appendChild(this.addEventBtn)
         BTN_CONTAINER.appendChild(this.prevBtn)
         BTN_CONTAINER.appendChild(this.todayBtn)
         BTN_CONTAINER.appendChild(this.nextBtn)     
@@ -576,9 +563,8 @@ class Calendar extends Component {
     #linkEvents(renderType) {
         // Full render
         if (renderType === Component.RENDER_TYPES.full) {
-            this.addEventBtn.addEventListener("click", e => {
-                console.log("Add Event")
-                // Open popup with form to add event information
+            if (this.addEventBtn) this.addEventBtn.addEventListener("click", e => {
+                this.container.dispatchEvent(new Event("newEvent"))
             })            
 
             this.todayBtn.addEventListener("click", e => {
@@ -606,6 +592,7 @@ class Calendar extends Component {
             if (this.#clearBtn) {
                 this.#clearBtn.addEventListener('click', e => {
                     this.#selectedDates = []
+                    this.container.dispatchEvent(new Event("clear"))
                     this.render(Component.RENDER_TYPES.partial)
                 })
             }
@@ -638,8 +625,7 @@ class Calendar extends Component {
         if (this.events.length != 0) {
             this.body.querySelectorAll(".calendar-event").forEach(event => {
                 event.addEventListener("click", e => {
-                    this.#clickedEvent = this.events[event.id]
-                    this.container.dispatchEvent(new CustomEvent("eventClick", { detail: { event: this.#clickedEvent }}))
+                    this.container.dispatchEvent(new CustomEvent("eventClick", { detail: { event: this.events[event.id] }}))
                 })
             })
         }

@@ -457,6 +457,7 @@ class Grid extends Component {
 
             if (this.#selectable && this.#layout === "card") {
                 // TODO: Add handling for when in card layout and selectable.
+                console.log(rowData)
                 // Not sure how to handle when both selectable and expandable
             }
 
